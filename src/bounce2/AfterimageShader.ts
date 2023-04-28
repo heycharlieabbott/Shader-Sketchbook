@@ -75,10 +75,10 @@
     vec3 depc = mix(texelNew.rgb,c.rgb,vec3(sin(1.-depth*2.8)));
     vec3 minus = gl_FragColor.rgb - mix(texelNew.rgb,vec3(.9),vec3(sin(1.-depth*20.8)));
     gl_FragColor.rgb = mix(depc,minus,vec3(sin(time)+0.1)*depth);
-    gl_FragColor.rgb = vec3(sin(time),0.,0.);
+    // gl_FragColor.rgb = vec3(sin(time),0.,0.);
     gl_FragColor.a = 1.;
 
-    // gl_FragColor = texelNew + texelOld;
+    gl_FragColor = texelNew + texelOld *damp*sin(time);
 
      }`
  }

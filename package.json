@@ -14,8 +14,10 @@
     "@react-three/fiber": "^8.13.0",
     "@types/three": "^0.150.2",
     "babel-plugin-glsl": "^1.0.0",
+    "canvas-capture": "^2.1.1",
     "glsl-noise": "^0.0.0",
     "glslify": "^7.1.1",
+    "leva": "^0.9.34",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "three": "^0.152.0"
