@@ -26,7 +26,7 @@ const Box = () =>{
   useFrame(({ clock }, delta) => {
     
     airef.current.uniforms.time.value = clock.elapsedTime;
-    shref.current.uniforms.time.value = clock.elapsedTime;
+    shref.current.uniforms.uTime.value = clock.elapsedTime;
 
   });
 
@@ -49,8 +49,9 @@ const depthBuffer = useDepthBuffer({
     <meshStandardMaterial color="hotpink" />
   </mesh>
       <Effects>
-      <afterimagePass args={[-100.1, 0, depthBuffer]} ref={airef} />
       <shaderPass args={[CopyShader]} ref={shref}/>
+      <afterimagePass args={[-100.1, 0, depthBuffer]} ref={airef} />
+     
 
       </Effects>
      

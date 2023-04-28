@@ -53,48 +53,19 @@
 
  
      varying vec2 vUv;
-
-     float random(vec2 co)
-{
-    highp float a = 12.9898;
-    highp float b = 78.233;
-    highp float c = 43758.5453;
-    highp float dt= dot(co.xy ,vec2(a,b));
-    highp float sn= mod(dt,3.14);
-    return fract(sin(sn) * c);
-}
      
-vec4 when_gt( vec4 x, float y ) {
-  return max( sign( x - y ), 0.0 );
-}
+
  
-mat2 rotate2d(float _angle){
-  return mat2(cos(_angle),-sin(_angle),
-              sin(_angle),cos(_angle));
-}
     void main() {
  
     vec4 texelOld = texture2D( tOld, vUv );
     vec4 texelNew = texture2D( tNew, vUv );
-
-    float alph = texelNew.w;
-    // texelOld *= damp;
+    vec4 de = texture2D( d, vUv );
+    texelOld *= damp;
  
     gl_FragColor.a = 1.;
 
-    float mask = (smoothstep(alph,0.2,.9));
-    
-
-    texelOld *= .1;
-
-    texelOld.xy *= rotate2d(time);
-
-vec4 mixer = (max(texelNew,sin(texelOld*700. * texelNew + time)*.2));
-
-
-    gl_FragColor = mix(vec4(mask),pow(mixer * (1.-pow(length(vUv - 0.5),.9)),vec4(.7)),1.);
-
- 
+    gl_FragColor = texelNew + texelOld *damp*sin(time);
 
      }`
  }

@@ -303,17 +303,13 @@ void addObj(inout float dist, inout vec3 color, float d, vec3 c) {
 }
 
 void scene(in vec2 pos, out vec3 color, out float dist, in float time) {
-pos -= 0.5;
-    pos *= rotate2d(time*.1);
-    //pos -= 0.5;
-    float Box = sdBox((pos - 0.5),vec2(.01,.25));
 
-    float roundBox = sdRoundedBox(pos,vec2(.25,.25),vec4(.001 - sin(time*.2)*.5));
+    float Box = sdBox((pos - 0.5),vec2(.01,.25));
+    float roundBox = sdRoundedBox(pos - 0.5,vec2(.25,.25),vec4(.5e-2));
     dist = 1.; color = vec3(0.,0.,0.);
 
-vec2 noisecoords = pos;
-noisecoords *= rotate2d(cnoise2(pos*3. + time*.2));
-    vec3 boxcol = vec3(sin(roundBox*500. * smoothstep(-1.,.2,cnoise2(vec2(noisecoords.x + time*.1,noisecoords.y - time*.2)*20.)) + time));
+
+    vec3 boxcol = vec3(1.,1.,1.);
 
 
     addObj(dist, color, roundBox, boxcol);
@@ -322,7 +318,7 @@ noisecoords *= rotate2d(cnoise2(pos*3. + time*.2));
 }
 
 void trace(vec2 p, vec2 dir, out vec3 c,in float time)  {
-    for (int j = 0; j < 3; j++) {
+    for (int j = 0; j < 20; j++) {
         float d;
         scene(p, c, d, time);
         if (d < 1e-3) {
@@ -335,7 +331,7 @@ void trace(vec2 p, vec2 dir, out vec3 c,in float time)  {
     c = vec3(0,0,0);
 }
 
-#define SAMPLES 100
+#define SAMPLES 50
 
 
   //------------------------------------------------------------------------------------------------------------
@@ -406,7 +402,7 @@ void trace(vec2 p, vec2 dir, out vec3 c,in float time)  {
     //Color Correction
 
     col = pow(col,vec3(1.));
-    gl_FragColor = vec4(col,col.x);}`
+    gl_FragColor = vec4(col,1.);}`
 
 };
 
