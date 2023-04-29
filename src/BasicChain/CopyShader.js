@@ -3,12 +3,14 @@
  */
 import glsl from 'glslify'
 
-const PlainCopyShader = {
+const CopyShader = {
 
 	uniforms: {
 
 		'tDiffuse': { value: null },
-		'opacity': { value: 1.0 }
+		'opacity': { value: 1.0 },
+		'uTime': { value: 0.0 },
+
 
 	},
 
@@ -23,11 +25,15 @@ const PlainCopyShader = {
 		uniform float opacity;
 		uniform sampler2D tDiffuse;
 		varying vec2 vUv;
+		uniform float uTime;
 		void main() {
+
+			vec3 col = vec3(abs(sin(uTime)));
 			gl_FragColor = texture2D( tDiffuse, vUv );
+			gl_FragColor.xyz = col;
 			gl_FragColor.a *= opacity;
 		}`
 
 };
 
-export { PlainCopyShader };
+export { CopyShader };

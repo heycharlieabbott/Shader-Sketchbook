@@ -8,7 +8,9 @@ const PlainCopyShader = {
 	uniforms: {
 
 		'tDiffuse': { value: null },
-		'opacity': { value: 1.0 }
+		'opacity': { value: 1.0 },
+		'uTime': { value: 0.0 },
+
 
 	},
 
@@ -24,8 +26,15 @@ const PlainCopyShader = {
 		uniform sampler2D tDiffuse;
 		varying vec2 vUv;
 		void main() {
-			gl_FragColor = texture2D( tDiffuse, vUv );
-			gl_FragColor.a *= opacity;
+			vec2 uv = vUv;
+			vec3 col = texture2D( tDiffuse, vUv ).xyz;
+
+			float cir = smoothstep(0.1,0.2,length(uv-0.5));
+
+			gl_FragColor.xyz = pow(col,vec3(2.-cir));
+			gl_FragColor.a = 1.;
+
+
 		}`
 
 };

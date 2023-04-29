@@ -1,68 +1,10 @@
 import * as React from "react";
 import './App.css'
 import { Canvas } from "@react-three/fiber";
-import { Effects } from "@react-three/drei";
-import { useFrame } from "@react-three/fiber";
-import { useRef, useState } from "react";
-import { BoxGeometry } from "three";
-import { AfterimagePass } from "./bounce2/AfterimagePass";
-import { extend } from "@react-three/fiber";
-import { useThree } from "@react-three/fiber";
-import { useDepthBuffer } from "@react-three/drei";
+import {useState } from "react";
 import Recorder from './Recorder.jsx';
 import { button, folder, Leva, useControls } from 'leva'
-import { ShaderPass } from './bounce2/ShaderPass.js';
-import {CopyShader} from './bounce2/CopyShader.js'
-import {PlainCopyShader} from './bounce2/PlainCopyShader.js'
-
-
-
-
-
-
-const Box = () =>{
-  const box = useRef<BoxGeometry>(null);
-  extend({ AfterimagePass, ShaderPass })
-
-  useFrame(({ clock }, delta) => {
-    
-    airef.current.uniforms.time.value = clock.elapsedTime;
-    shref.current.uniforms.uTime.value = clock.elapsedTime;
-    ccref.current.uniforms.uTime.value = clock.elapsedTime;
-
-  });
-
-  
-const {scene, camera} = useThree();
-const airef = useRef();
-const shref = useRef();
-const ccref = useRef();
-
-const depthBuffer = useDepthBuffer({
-  frames: 1, // How many frames it renders, Infinity by default
-});
-
-  useFrame(() =>{
-    box.current?.rotateX(.01);
-  })
-  return (
-    <>
-    <mesh rotation={[10, 15, 6]}>
-    <boxGeometry args={[2, 2, 2]} ref={box} />
-    <meshStandardMaterial color="hotpink" />
-  </mesh>
-      <Effects>
-      <shaderPass args={[CopyShader]} ref={shref}/>
-      <afterimagePass args={[-100.1, 0, depthBuffer]} ref={airef} />
-      <shaderPass args={[PlainCopyShader]} ref={ccref}/>
-
-     
-
-      </Effects>
-     
-      </>
-  )
-}
+import {EffectChain} from './Chain2/EffectChain.tsx'
 
 function App() {
 
@@ -88,9 +30,7 @@ function App() {
   return (
     <>
      <Canvas gl={{ preserveDrawingBuffer: true }}>
-      <ambientLight />
-      <pointLight position={[10, 10, 10]} power={1000} />
-      <Box/>
+      <EffectChain/>
       <Recorder cap={captureStarted} endTime={70} screenshot={screenShot}/>
     </Canvas>
     </>
