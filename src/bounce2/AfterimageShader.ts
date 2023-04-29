@@ -89,10 +89,12 @@ mat2 rotate2d(float _angle){
 
     texelOld.xy *= rotate2d(time);
 
-vec4 mixer = (max(texelNew,sin(texelOld*700. * texelNew + time)*.2));
+vec4 mixer = (max(texelNew,sin(texelOld*700. * texelNew + time*.1)*.9));
 
+vec4 col = mix(vec4(mask),pow(mixer * (1.-pow(length(vUv - 0.5),.1)),vec4(.7)),1.);
+    
 
-    gl_FragColor = mix(vec4(mask),pow(mixer * (1.-pow(length(vUv - 0.5),.9)),vec4(.7)),1.);
+gl_FragColor = pow(col,vec4(1.2,1.2,.9,1.));
 
  
 

@@ -4,6 +4,7 @@
 
 import glsl from 'glslify'
 
+
 const CopyShader = {
 
 	uniforms: {
@@ -16,6 +17,7 @@ const CopyShader = {
 
 	vertexShader: glsl`
 		varying vec2 vUv;
+
 		
         void main() {
 			vUv = uv;
@@ -27,9 +29,11 @@ const CopyShader = {
 		// uniform sampler2D tDiffuse;
         // uniform float time;
 		 varying vec2 vUv;
+     
 
         precision highp float;
 // #pragma glslify: random = require(glsl-random)
+// #pragma glslify: snoise4 = require(glsl-noise/simplex/2D)
 
 //
 // Description : Array and textureless GLSL 2D/3D/4D simplex
@@ -312,8 +316,9 @@ pos -= 0.5;
     dist = 1.; color = vec3(0.,0.,0.);
 
 vec2 noisecoords = pos;
-noisecoords *= rotate2d(cnoise2(pos*3. + time*.2));
-    vec3 boxcol = vec3(sin(roundBox*500. * smoothstep(-1.,.2,cnoise2(vec2(noisecoords.x + time*.1,noisecoords.y - time*.2)*20.)) + time));
+noisecoords *= rotate2d(cnoise2(pos*3. * cnoise2(vec2(time*.5,pos.y))*.5 + time*.2));
+// noisecoords *= scale(vec2(cnoise2(vec2(sin(time*.001 + 100.)*4.,0.))))*10.;
+    vec3 boxcol = vec3(sin(roundBox*500. * smoothstep(-abs(sin(time*.3))*2.,abs(sin(time*.2))*2.,cnoise2(vec2(noisecoords.x + time*.1,noisecoords.y - time*.2)*20.)) + time));
 
 
     addObj(dist, color, roundBox, boxcol);
@@ -335,7 +340,7 @@ void trace(vec2 p, vec2 dir, out vec3 c,in float time)  {
     c = vec3(0,0,0);
 }
 
-#define SAMPLES 100
+#define SAMPLES 20
 
 
   //------------------------------------------------------------------------------------------------------------
@@ -359,6 +364,8 @@ void trace(vec2 p, vec2 dir, out vec3 c,in float time)  {
   //------------------------------------------------------------------------------------------------------------
 
   void main() {
+    #pragma glslify: snoise4 = require(/Users/charlesabbott/Desktop/Code/r3fvite/node_modules/glsl-noise/simplex/4d.glsl) 
+
     vec2 uv = vUv;
     vec3 color = texture2D(uScene, uv).rgb;
     float iTime = uTime;
@@ -405,8 +412,15 @@ void trace(vec2 p, vec2 dir, out vec3 c,in float time)  {
    
     //Color Correction
 
-    col = pow(col,vec3(1.));
-    gl_FragColor = vec4(col,col.x);}`
+    col = pow((col),vec3(3.2));
+    
+    gl_FragColor = vec4(col,col.x);
+    // gl_FragColor = snoise4(vec4(1.));
+  
+  
+  }
+    
+    `
 
 };
 

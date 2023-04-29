@@ -9,7 +9,7 @@ import {
     WebGLRenderTarget,
   } from 'three'
   import { Pass, FullScreenQuad } from 'three-stdlib/postprocessing/Pass'
-  import { AfterimageShader } from './AfterimageShaderTemplate'
+  import { AfterimageShader } from '../Shaders/AfterimageShaderTemplate'
   
   class AfterimagePass extends Pass {
     public shader

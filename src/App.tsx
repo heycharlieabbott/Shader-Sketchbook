@@ -13,6 +13,7 @@ import Recorder from './Recorder.jsx';
 import { button, folder, Leva, useControls } from 'leva'
 import { ShaderPass } from './bounce2/ShaderPass.js';
 import {CopyShader} from './bounce2/CopyShader.js'
+import {PlainCopyShader} from './bounce2/PlainCopyShader.js'
 
 
 
@@ -27,6 +28,7 @@ const Box = () =>{
     
     airef.current.uniforms.time.value = clock.elapsedTime;
     shref.current.uniforms.uTime.value = clock.elapsedTime;
+    ccref.current.uniforms.uTime.value = clock.elapsedTime;
 
   });
 
@@ -34,6 +36,7 @@ const Box = () =>{
 const {scene, camera} = useThree();
 const airef = useRef();
 const shref = useRef();
+const ccref = useRef();
 
 const depthBuffer = useDepthBuffer({
   frames: 1, // How many frames it renders, Infinity by default
@@ -51,6 +54,8 @@ const depthBuffer = useDepthBuffer({
       <Effects>
       <shaderPass args={[CopyShader]} ref={shref}/>
       <afterimagePass args={[-100.1, 0, depthBuffer]} ref={airef} />
+      <shaderPass args={[PlainCopyShader]} ref={ccref}/>
+
      
 
       </Effects>
