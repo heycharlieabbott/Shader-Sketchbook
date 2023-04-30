@@ -291,29 +291,34 @@ const CopyShader = {
 			float time = uTime;
 			vec2 uv = vUv;
 
-			uv += cnoise2(uv*8.)*.001;
+			uv += mix(cnoise2(uv*8.)*.001,cnoise2(uv*80.)*.01,0.01);
 
 			float cir = length(uv - 0.5);
 			float cir2 = cir;
+
+			vec2 gv = fract((uv*990.)) * (1.0-cir*1.4);
+			gv -= 0.5;
+			gv = smoothstep(-.1,.2,abs(gv));
+			float g = (gv.x + gv.y)*.5;
 
 			float mask = smoothstep(0.25,.7,cir);
 			float mask2 = smoothstep(0.5,.8,cir);
 
 
-			cir2 = smoothstep(0.2,.7,cir2);
+			cir2 = smoothstep(0.1,.7,cir2);
 
 			//cirdef
 			// cir = smoothstep(0.,.65,cir);
 			cir = smoothstep(-.7,1.02,cir);
 
-			cir = smoothstep(.2,1.5,max(cir,1.-cir));
+			cir = smoothstep(.2,1.5,max(cir,1.011-cir));
 			cir = pow(cir,1.2);
 			cir += smoothstep(-.1,1.,cir);
 			cir -= smoothstep(0.2,.84,min(pow(cir,1.2),1.-pow(cir,.9)));
 			cir += smoothstep(0.4,1.7,max(cir,1.-sin(cir*100.)*cos(uv.y*10.) + random(uv*700. - cir * 100.)))*.04;
 			cir /= smoothstep(0.,.5,cir);
 
-			cir -= smoothstep(0.1,3.2,1.-pow(cir2,1.5));
+			cir -= smoothstep(0.15,3.2,1.-pow(cir2,1.3));
 			
 
 			cir -= cir2*.3;
@@ -336,7 +341,12 @@ const CopyShader = {
 
 			cir += pow(mask,1.9)*.7;
 
+			cir = mix(1.-cir,cir,1.-cir*.35);
+
 			cir = min(1.,max(0.,cir));
+
+			float ggrid = g*-.7 + cir*2.; 
+			cir += mix(ggrid,-ggrid,cir*.4)*.9;
 
 			vec3 col = vec3(cir);
 
@@ -344,8 +354,14 @@ const CopyShader = {
 			col.y += cir*.03;
 			col.xy -= mask*.05;
 
+			col.x *= g*.95 * (cir+0.99);
+			// col.xz *= g*1.02*(cir*1.1+0.9);
+			// col.z *= g*1.1*(cir+0.9);
 
-			
+			vec3 monocol = vec3((col.x + col.y + col.z)/3.);
+			col = mix(col,monocol,mask*1.5);
+
+			// col = vec3(mask);
 
 			gl_FragColor.xyz = col;
 			gl_FragColor.a *= opacity;
