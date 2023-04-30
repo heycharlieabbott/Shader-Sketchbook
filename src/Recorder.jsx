@@ -8,7 +8,6 @@ const Recorder = (props) => {
 
   useThree((s) => {
     CanvasCapture.init(s.gl.domElement);
-    console.log(s);
   });
 
   CanvasCapture.bindKeyToPNGSnapshot("p");
