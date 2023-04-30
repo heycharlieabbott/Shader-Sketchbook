@@ -25,13 +25,21 @@ const PlainCopyShader = {
 		uniform float opacity;
 		uniform sampler2D tDiffuse;
 		varying vec2 vUv;
+
+
+
+
+
+		
 		void main() {
 			vec2 uv = vUv;
 			vec3 col = texture2D( tDiffuse, vUv ).xyz;
 
 			float cir = smoothstep(0.1,0.2,length(uv-0.5));
 
-			gl_FragColor.xyz = pow(col,vec3(2.-cir));
+			col = pow(col,vec3(2.-cir));
+			col *= 1.5 - cir*.2;
+			gl_FragColor.xyz = col;
 			gl_FragColor.a = 1.;
 
 

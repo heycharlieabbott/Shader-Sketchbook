@@ -349,34 +349,50 @@ const float PI2 = PI * 2.;
 			float cir = length(uv - 0.5);
 
 			col *= smoothstep(-.8,0.5,(cir));
-			col += exp(cir - uv.x)*.02 + abs(sin(time))+.4;
+			col += exp(cir - uv.x)*.02 + abs(sin(time))+10.;
 
 
 			vec2 gv = vec2(atan(uv.x - 0.5,uv.y - 0.5),length(uv-0.5));
 
-			float logcoord = cir + cnoise2(uv*2.-0.5)*.009;
-			col += fract(log(logcoord + cnoise2(uv*20.)*.01) - time);
-			col += mix(cir,fract(log(logcoord + cnoise2(uv*2.)*.01) - time),sin(time*.5));
-			col -= pow(cir,.3);
-			col -= pow(cir,.01);
-			col += (cnoise2(vec2(fract(log(logcoord + cnoise2(uv*2.)*.02) - time),time)));
 
-			col -= (cnoise2(vec2(fract(log(logcoord + cnoise2(uv*12. + time)*.01) - time),time)));
-			col -= (cnoise2(vec2(fract(log(logcoord - cnoise2(uv*7. + time)*.01) - time),time)));
+			float logcoord = cir + cnoise2(uv*2.-0.5)*.009;
+			// col += fract(log(logcoord + cnoise2(uv*20.)*.01) - time);
+			// col += mix(cir,fract(log(logcoord + cnoise2(uv*2.)*.01) - time),sin(time*.5));
+			// col -= pow(cir,.3);
+			// col -= pow(cir,.01);
+			// col += (cnoise2(vec2(fract(log(logcoord + cnoise2(uv*2.)*.02) - time),time)));
+			// col -= (cnoise2(vec2(fract(log(logcoord + cnoise2(uv*12. + time)*.01) - time),time)));
+			// col -= (cnoise2(vec2(fract(log(logcoord - cnoise2(uv*7. + time)*.01) - time),time)));
 
 
 			gv.x /= 6.2831;
 
+			vec2 linecoords = fract(gv*10. + cnoise2(uv*10. + time)*.02 - time*.3);
+			vec2 gvid = floor(linecoords);
+			linecoords = smoothstep(0.,.2 + sin(time)*.05,linecoords);
 
 			
-			col.xz *= rotate2d(fract(log(logcoord + cnoise2(uv*20.)*.01) - time)*.9);	
-			col.xy *= rotate2d(fract(log(logcoord + cnoise2(uv*2.)*.01) - time*.9)*.1);	
-			col.xy *= rotate2d(cnoise2(vec2(fract(log(logcoord + cnoise2(uv*2.)*.01) - time))));
 
-			col *=  smoothstep(0.,.1,(cir));
-			col *=  smoothstep(-.1,1.2,pow((1.-cir),1.2));
+			
+			col.xz *= rotate2d(fract(log(logcoord + cnoise2(uv*10.)*.01) - time)*8.9 * cir + sin(time));	
+			col.yz *= rotate2d(fract(log(logcoord + cnoise2(uv*20.)*.01) - time*.9)*10.9 * -1. + cir);	
+			col.xy *= rotate2d(cnoise2(vec2(fract(log(logcoord + cnoise2(uv*2.)*.01) - time))));
+			col.xy *= rotate2d(linecoords.x*2.);
+			col.xz *= rotate2d(linecoords.x*2. + time);
+			col.yz *= rotate2d(linecoords.x*2. + time);
+
+
+
+			vec3 lines = vec3((dot(col.yz + col.x,min(linecoords,vec2(1.)-linecoords))));
+			col += mix(vec3(0.),lines,vec3(sin(time)*.8));
+
+			col *=  smoothstep(0.,.3,(cir));
+			col *=  smoothstep(.1,1.2,pow((1.-cir),1.2));
+			col *= vec3(3.);
+
+			// col= vec3(min(linecoords,1.-linecoords),1.);
 		
-			col += sin(cir*10. - time)*.3;
+			// col += sin(cir*10. - time)*.3+0.2;
 
 
 			gl_FragColor = vec4(col,1.);
