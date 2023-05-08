@@ -289,7 +289,7 @@
     vec4 texelOld = texture2D( tOld, vUv );
     vec4 texelNew = texture2D( tNew, vUv );
     vec4 de = texture2D( d, vUv );
-    texelOld *= .97;
+    texelOld *= .99;
 
 
     vec4 tex = texelFetch(tNew,ivec2((vUv*1000.)),0);

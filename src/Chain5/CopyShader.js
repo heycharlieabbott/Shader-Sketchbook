@@ -305,6 +305,8 @@ const CopyShader = {
 			
 
 			float mask = smoothstep(0.7,0.,pow(cir, (sin(time)+1.5)));
+			// float mask = smoothstep(0.7,0.,pow(cir, 1.));
+
 			float mask2 = smoothstep(0.5,.8,cir);
 
 			vec2 noisecoords = uv*(30.+sin(time)*.1);
@@ -313,26 +315,33 @@ const CopyShader = {
 
 			noisecoords.x += time;
 
-			cir = cnoise2(noisecoords);
+			// noisecoords += snoise3(vec3(time*.1, uv.x*ma,uv.y*3.))*.1;
+
+			cir = cnoise2(noisecoords * 1.);
 
 			cir = smoothstep(0.,.1 + sin(time)*.09,cir);
-	
+
+
+
 			vec3 col = vec3(cir);
 
 			vec3 monocol = col;
-			
-
 		
-			col.xy *= rotate2d((.2-cir)*3. + time);
+		
+			col.xy *= rotate2d((.2-cir)*3. + time*.2);
 			col.xz *= rotate2d((.3-cir)*3. + time*.1);
 			col.yz *= rotate2d((.3-cir)*3. - time);
 			col *= smoothstep(0.,.1,(1.2-cir));
 
+
+
+			col = max(col,vec3(cir)*.05);
+
 			// col += cnoise2(vec2(uv.x,cir + time)*1.)*.1;
 			
 
-			col = mix(monocol,col * mask,vec3(1. + sin(time*.1)*.1));
-
+//			col = mix(monocol,col * mask,vec3(.7 + sin(time*.9)*.01));
+			col = mix(monocol,col,vec3(.95-cir)*1.5);
 
 			gl_FragColor.xyz = col;
 
