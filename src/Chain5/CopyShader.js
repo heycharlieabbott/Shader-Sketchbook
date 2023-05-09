@@ -271,6 +271,41 @@ const CopyShader = {
 		  vec2 q = abs(p)-b+r.x;
 		  return min(max(q.x,q.y),0.0) + length(max(q,0.0)) - r.x;
 	  }
+
+	  // Based on Morgan McGuire @morgan3d
+// https://www.shadertoy.com/view/4dS3Wd
+float noise (in vec2 st) {
+    vec2 i = floor(st);
+    vec2 f = fract(st);
+
+    // Four corners in 2D of a tile
+    float a = random(i);
+    float b = random(i + vec2(1.0, 0.0));
+    float c = random(i + vec2(0.0, 1.0));
+    float d = random(i + vec2(1.0, 1.0));
+
+    vec2 u = f * f * (3.0 - 2.0 * f);
+
+    return mix(a, b, u.x) +
+            (c - a)* u.y * (1.0 - u.x) +
+            (d - b) * u.x * u.y;
+}
+
+#define OCTAVES 10
+float fbm (in vec2 st) {
+    // Initial values
+    float value = 0.0;
+    float amplitude = .5;
+    float frequency = 0.;
+    //
+    // Loop of octaves
+    for (int i = 0; i < OCTAVES; i++) {
+        value += amplitude * noise(st);
+        st *= 2.;
+        amplitude *= .1;
+    }
+    return value;
+}
 	
 	
 	
@@ -291,6 +326,7 @@ const CopyShader = {
 			float time = uTime;
 			vec2 uv = vUv;
 
+
 			uv -= 0.5;
 
 			uv *= rotate2d(cnoise2(uv*.2 + time*.01));
@@ -307,9 +343,13 @@ const CopyShader = {
 			float mask = smoothstep(0.7,0.,pow(cir, (sin(time)+1.5)));
 			// float mask = smoothstep(0.7,0.,pow(cir, 1.));
 
-			float mask2 = smoothstep(0.5,.8,cir);
+			float mask2 = smoothstep(0.5,.8,cir*2.)-.5;
 
-			vec2 noisecoords = uv*(30.+sin(time)*.1);
+			vec2 noisecoords = vec2((30.+sin(time)*.1) + fbm(uv*15.)*.9);
+
+			noisecoords *= smoothstep(0.95,.95,noisecoords) * (mask*1.2);
+
+			noisecoords *= uv;
 
 			noisecoords.y += sin(noisecoords.x*1.1 + time);
 
@@ -342,6 +382,8 @@ const CopyShader = {
 
 //			col = mix(monocol,col * mask,vec3(.7 + sin(time*.9)*.01));
 			col = mix(monocol,col,vec3(.95-cir)*1.5);
+
+			
 
 			gl_FragColor.xyz = col;
 

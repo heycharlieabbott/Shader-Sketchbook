@@ -13,19 +13,31 @@ const EffectChain = () =>{
  
   extend({ AfterimagePass, ShaderPass })
 
+  const {scene, camera, size} = useThree();
+
+
+
+
   useFrame(({ clock }, delta) => {
     
     airef.current.uniforms.time.value = clock.elapsedTime;
     shref.current.uniforms.uTime.value = clock.elapsedTime;
     ccref.current.uniforms.uTime.value = clock.elapsedTime;
+    ccref.current.uniforms.uWidth.value = size.width;
+    ccref.current.uniforms.uHeight.value = size.height;
+
+
+
 
   });
 
   
-const {scene, camera} = useThree();
+
 const airef = useRef();
 const shref = useRef();
 const ccref = useRef();
+
+
 
 const depthBuffer = useDepthBuffer({
   frames: 1, // How many frames it renders, Infinity by default
