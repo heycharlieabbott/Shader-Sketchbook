@@ -36,7 +36,7 @@ const PlainCopyShader = {
 // by applying gaussian at intermediate MIPmap level.
 
 		const int samples = 100,
-		LOD = 1,         // gaussian done on MIPmap at scale LOD
+		LOD = 2,         // gaussian done on MIPmap at scale LOD
 		sLOD = 2 << LOD; // tile size = 2^LOD
 const float sigma = float(samples) * .25;
 
@@ -65,27 +65,20 @@ vec4 blur(sampler2D sp, vec2 U, vec2 scale) {
 			vec2 uv = vUv;
 			float time = uTime;
 
-			vec4 coloration = (sin(col * smoothstep(.01,.9,col) * 70. + time))+1.32;
+			col = mix(col2,col,length(uv-0.5)*3.);
 
-			col *= coloration;
-			col2 *= coloration;
+			vec4 monocol = (col.x + col.y + col.z + col.w) / vec4(4.);
 
-			col = mix(col,col2,20.8 * sin(time));
+			monocol = smoothstep(0.4,.6,monocol);
 
+			col = mix(col,monocol, (sin(time)+1.)*.5 * (length(uv - 0.5)*2.));
+			// col -= smoothstep(0.9,.5,length(uv - 0.5))*0.02;
 
-			col *= smoothstep(-.8,.32,col);
+			col = pow(col,vec4(.8));
 
-			col = smoothstep(vec4(0.32),vec4(3.3),col);
+			col *= 1.5;
 
-
-			col *=1.5;
-
-			
-
-
-			// col -= smoothstep(0.2,.9,1.-col.x)*.01;
-
-			col = pow(col,vec4(.09));
+			col = clamp(vec4(0.),vec4(1.),col);
 			gl_FragColor = col;
 			gl_FragColor.a *= opacity;
 		}`

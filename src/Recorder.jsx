@@ -14,6 +14,7 @@ const Recorder = (props) => {
 
   useEffect(() => {
     setFF(false);
+
     if (props.cap && !CanvasCapture.isRecording()) {
       console.log(props.cap);
       CanvasCapture.beginVideoRecord({
@@ -24,9 +25,10 @@ const Recorder = (props) => {
       // CanvasCapture.beginPNGFramesRecord({
       //   onExportProgress: (progress) => {
       //     // Options are optional, more info below.
-      //     console.log(`Zipping... ${Math.round(progress * 100)}% complete.`)
+      //     console.log(`Zipping... ${Math.round(progress * 100)}% complete.`);
       //   },
-      // })
+      //   fps: 30,
+      // });
     }
 
     if (!props.cap && !FF) {

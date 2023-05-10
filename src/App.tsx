@@ -1,16 +1,18 @@
 import * as React from "react";
 import './App.css'
 import { Canvas } from "@react-three/fiber";
-import {useState } from "react";
+import {useState, useEffect } from "react";
 import Recorder from './Recorder.jsx';
 import { button, folder, Leva, useControls } from 'leva'
-import {EffectChain} from './Chain5/EffectChain.tsx'
+import {EffectChain} from './Chain6/EffectChain.tsx'
 
 function App() {
 
   const [FF, setFF] = useState(true)
   const [captureStarted, setCaptureStarted] = useState(false)
   const [screenShot, setScreenshot] = useState(false)
+
+  // useEffect(() => setCaptureStarted(true))
 
   // const opts = useControls(
   //   {
@@ -31,7 +33,7 @@ function App() {
     <>
      <Canvas gl={{ preserveDrawingBuffer: true }}>
       <EffectChain/>
-      <Recorder cap={captureStarted} endTime={70} screenshot={screenShot}/>
+      <Recorder cap={captureStarted} endTime={60} screenshot={screenShot}/>
     </Canvas>
     </>
   )
