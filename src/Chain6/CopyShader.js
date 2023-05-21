@@ -330,6 +330,10 @@ float fbm (in vec2 st) {
 
 			uv -= 0.5;
 
+			uv *= rotate2d(sin(time)*.05);
+
+			// uv *= scale(vec2(wave *0.5)+0.7);
+
 			uv *= rotate2d(snoise3(vec3(uv*1.2,time*.5))*0.07);
 
 			float cir = length(uv*.5);
@@ -348,27 +352,29 @@ float fbm (in vec2 st) {
 			float n = fbm(noisecoords*.1 + time);
 
 			uv += cnoise2(uv*2. + time)*0.11 * cir;
+
+			
 			float sq = fract(uv.x / uv.y + time);
 
-			sq -= smoothstep(2.,.5 - sq*.05,abs(uv.y));
+			sq -= smoothstep(9.,.5 - sq*.05,abs(uv.y));
 
 			float d = fract(exp(sq) + time*.1);
 
-			sq -= smoothstep(0.1,.8,d * (2.-d)) * wave;
+			sq -= smoothstep(0.,1.,d * (1.8-d)) - wave;
 
 			//sq += fract(pow(abs(uv.y*.3),wave+.1) + time*.2);
 
 
-			sq *= smoothstep(.1,20.,abs(uv.y*.8));
+			sq *= smoothstep(-.1 + wave*.9,2. + wave,abs(uv.y*.8));
 
-			sq *=10. + n*10.;
+			sq *=1. + n*10.;
 
 			sq += cir * wave * 0.2;
 			sq = clamp(0.,1.,sq);
 
 			vec3 col = vec3(sq);
 
-			col *= pal( sq, vec3(0.2,0.2,0.3),vec3(0.1,0.1,0.1),vec3(1.,1.0,1.0),vec3(0.0,0.33,0.67) );
+			col *= pal( sq + time*0.2, vec3(0.2,0.2,0.3),vec3(0.1,0.1,0.1),vec3(1.,1.0,1.0),vec3(0.0,0.33,0.67) );
 			col += pal( sq, vec3(0.2,0.1,wave),vec3(20. * sq,.1 * sq,0.1),vec3(1.,1.0,1.0),vec3(0.0,0.33,0.67) )*sq;
 
 

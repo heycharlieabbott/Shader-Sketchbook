@@ -312,7 +312,7 @@
 
     gl_FragColor.a = 1.;
 
-    gl_FragColor = max(texelNew,texelOld*.7);
+    gl_FragColor = max(texelNew,texelOld*.7 + sin(texelOld.x * 100. + time) * abs(uv.x - 0.5)*.9 + abs(uv.y - 0.5)*.1);
 
     // gl_FragColor = vec4(sin(time));
 

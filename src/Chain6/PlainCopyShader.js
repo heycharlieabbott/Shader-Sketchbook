@@ -78,7 +78,7 @@ vec4 blur(sampler2D sp, vec2 U, vec2 scale) {
 
 			col *= 1.5;
 
-			col = clamp(vec4(0.),vec4(1.),col);
+			//col = clamp(vec4(0.),vec4(1.),col);
 			gl_FragColor = col;
 			gl_FragColor.a *= opacity;
 		}`
