@@ -14,6 +14,7 @@
    tOld: IUniform<Texture | null>
    d: IUniform<Texture | null>
    time: IUniform<number>
+   framecount: IUniform<number>
  }
  
  export interface IAfterimageShader extends IShader<AfterimageShaderUniforms> {}
@@ -47,7 +48,7 @@
     
      uniform float damp;
      uniform float time;
-     uniform float framecount;
+     uniform int framecount;
  
       uniform sampler2D tOld;
      uniform sampler2D tNew;
@@ -55,6 +56,9 @@
 
  
      varying vec2 vUv;
+
+     #define M_PI 3.141592653589793238462643
+
 
 vec4 when_gt( vec4 x, float y ) {
   return max( sign( x - y ), 0.0 );
@@ -342,16 +346,66 @@ void trace(vec2 p, vec2 dir, inout vec3 c,in float time)  {
   for (int j = 0; j < 1000; j++) {
       float d;
       scene(p, c, d, time);
-      if (d < 1e-3) {
-          //c = vec3(0,.1,0);
+      if (d < 1e-8) {
           return;
       }
       if (d > 1e1) break;
-      p -= dir * d;
+      p += dir * d;
   }
 }
 
 // #define SAMPLES 100
+
+vec2 get_random_numbers(inout uvec2 seed) {
+  // This is PCG2D: https://jcgt.org/published/0009/03/02/
+  seed = 1664525u * seed + 1013904223u;
+  seed.x += 1664525u * seed.y;
+  seed.y += 1664525u * seed.x;
+  seed ^= (seed >> 16u);
+  seed.x += 1664525u * seed.y;
+  seed.y += 1664525u * seed.x;
+  seed ^= (seed >> 16u);
+  // Convert to float. The constant here is 2^-32.
+  return vec2(seed) * 2.32830643654e-10;
+}
+
+
+// Given uniform random numbers u_0, u_1 in [0,1)^2, this function returns a
+// uniformly distributed point on the unit sphere (i.e. a random direction)
+// (omega)
+vec3 sample_sphere(vec2 random_numbers) {
+  float z = 2.0 * random_numbers[1] - 1.0;     
+  float phi = 2.0 * M_PI * random_numbers[0];     
+  float x = cos(phi) * sqrt(1.0 - z * z);     
+  float y = sin(phi) * sqrt(1.0 - z * z);     
+  return vec3(x, y, z);
+}
+
+
+// Like sample_sphere() but only samples the hemisphere where the dot product
+// with the given normal (n) is >= 0
+// vec3 sample_hemisphere(vec2 random_numbers, vec3 normal) {
+//   vec3 direction = sample_sphere(random_numbers);     
+//   if (dot(normal, direction) < 0.0)         direction -= 2.0 * dot(normal, direction) * normal;
+//        return direction;
+// }
+
+
+// vec3 get_ray_radiance(vec3 origin, vec3 direction, inout uvec2 seed) {
+//   vec3 radiance = vec3(0.0);
+//   vec3 throughput_weight = vec3(1.0);
+//   for (int i = 0; i != MAX_PATH_LENGTH; ++i) 
+//   {         float t;         
+//             triangle_t tri;         
+//             if (ray_mesh_intersection(t, tri, origin, direction)) 
+//             {             radiance += throughput_weight * tri.emission;
+//                            origin += t * direction;
+//                            direction = sample_hemisphere(get_random_numbers(seed), tri.normal);
+//                             throughput_weight *= tri.color * 2.0 * dot(tri.normal, direction);}        
+//                              else  break;     }
+//   return radiance;
+// }
+
 
 
     void main() {
@@ -386,16 +440,26 @@ void trace(vec2 p, vec2 dir, inout vec3 c,in float time)  {
     // col /= 3.;
 
     float c = float(450);
+    //c = time + 1000.;
 
    
 
-    float iTimeI = framecount;
+    float iTimeI = float(framecount);
+    uvec2 seed = uvec2((gl_FragCoord + time)) ^ uvec2(framecount << 16);
+    vec2 randos = get_random_numbers(seed);
+    randos *= rotate2d(random(randos) * 10.);
     float tI = (iTimeI + random(uv + iTimeI)) / c * 2. * 3.1415;
 
     vec3 new;
 
     if (iTimeI <= c){
-    trace(uv, vec2(cos(tI), sin(tI)), new, iTime);
+
+    //RANDOM GRAIN METHOD  
+    // trace(uv, randos, new, iTime);
+
+    //CIRCULAR METHOD
+    trace(uv, vec2(cos(tI),sin(tI)), new, iTime);
+
     new /= c;
     col += new;
   }
