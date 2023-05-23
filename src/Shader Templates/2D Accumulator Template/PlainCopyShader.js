@@ -31,10 +31,8 @@ const PlainCopyShader = {
 
 			vec4 col = texture2D( tDiffuse, vUv );
 
-			col *= smoothstep(vec4(.0),vec4(.1),col);
+			col = smoothstep(vec4(0.),vec4(.9),col);
 
-
-			col = pow(col,vec4(.5));
 			gl_FragColor = col;
 			
 		}`

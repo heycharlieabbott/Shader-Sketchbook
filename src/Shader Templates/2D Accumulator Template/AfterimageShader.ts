@@ -316,38 +316,7 @@ float sdRoundedBox( in vec2 p, in vec2 b, in vec4 r )
 }
 
 
-float noise (in vec2 st) {
-  vec2 i = floor(st);
-  vec2 f = fract(st);
 
-  // Four corners in 2D of a tile
-  float a = random(i);
-  float b = random(i + vec2(1.0, 0.0));
-  float c = random(i + vec2(0.0, 1.0));
-  float d = random(i + vec2(1.0, 1.0));
-
-  vec2 u = f * f * (3.0 - 2.0 * f);
-
-  return mix(a, b, u.x) +
-          (c - a)* u.y * (1.0 - u.x) +
-          (d - b) * u.x * u.y;
-}
-
-#define OCTAVES 10
-float fbm (in vec2 st) {
-  // Initial values
-  float value = 0.0;
-  float amplitude = .5;
-  float frequency = 0.;
-  //
-  // Loop of octaves
-  for (int i = 0; i < OCTAVES; i++) {
-      value += amplitude * noise(st);
-      st *= 2.;
-      amplitude *= .1;
-  }
-  return value;
-}
 
 
 //2D RAY FUNCTIONS
@@ -362,42 +331,10 @@ void addObj(inout float dist, inout vec3 color, float d, vec3 c) {
 
 void scene(in vec2 pos, inout vec3 color, out float dist, in float time) {
   pos -= 0.5;
-
-vec2 BC = pos;
-
-
-// BC *= rotate2d(time*.5);
-  float Cir = length((BC + cnoise2(BC* 2.)*length(BC  * sin(time))))-0.2;
-  Cir = length(sdBox(BC * cnoise2(BC * 30.)*.4  + fbm(pos*500.)*.6,vec2(.05)));
-  vec3 circol = normalize(vec3(dot(fract(BC),abs(pos))))*.7 ;
-  // circol += sin(pos.x * 10000.);
-
-  //  circol -= length(pos)*.1;
-  // circol *= sin(circol * 5.)*20.;
-  circol.xz *= rotate2d(sin(pos.y* 10.) * cos(pos.x*10.) * cnoise2(pos * 10.)*100.);
-  circol.yz *= rotate2d(sin(pos.y* 1.) * cos(pos.x*10.) * cnoise2(pos * 10.)*10.);
-  circol.xy *= rotate2d(sin(pos.y* 10.) * cos(pos.x*10.) * cnoise2(pos * 10.)*10.);
-
-  // circol -= dot(-pos, circol.xy);
+  float Box = sdBox((pos),vec2(.25));
   dist = .001;
+  addObj(dist, color, Box, vec3(1.));
   
-
-
-  // for (int i = 0; i < 5; i ++){
-
-  //   BC -= float(i) / 20.;
-  //   float Cir = length(BC*5.);
-  // vec3 circol = vec3(2.);
-  // dist = .1;
-  // addObj(dist, color, Cir, circol);
-
-  // }
-
-  vec3 boxcol = vec3(.01);
-  float Box = sdBox(BC,vec2(.35,.35));
- 
-  Cir = mix(Box,Cir,sin(pos.y*100.));
-  addObj(dist, color, Cir, circol);
 
   // float Box2 = sdBox((pos - 0.2),vec2(.1));
   // addObj(dist, color, Box2, vec3(sin(time), 1.,1.));
@@ -405,21 +342,15 @@ vec2 BC = pos;
   
 }
 
-
-
-
-
-
-
 void trace(vec2 p, vec2 dir, inout vec3 c,in float time)  {
-  for (int j = 0; j < 200; j++) {
+  for (int j = 0; j < 1000; j++) {
       float d;
       scene(p, c, d, time);
       if (d < 1e-8) {
           return;
       }
-      if (d > 1.) break;
-      p -= dir * d;
+      if (d > 1e1) break;
+      p += dir * d;
   }
 }
 
@@ -477,13 +408,6 @@ vec3 sample_sphere(vec2 random_numbers) {
 
 
 
-
-
-
-
-
-
-
     void main() {
  
     vec4 texelOld = texture2D( tOld, vUv );
@@ -516,12 +440,12 @@ vec3 sample_sphere(vec2 random_numbers) {
     // col /= 3.;
 
     float c = float(450);
-    c = time + 1000.;
-    c = float(framecount) + 1.;
+    //c = time + 1000.;
 
-  
+   
+
     float iTimeI = float(framecount);
-    uvec2 seed = uvec2((gl_FragCoord + time)) ^ uvec2(framecount << 16 );
+    uvec2 seed = uvec2((gl_FragCoord + time)) ^ uvec2(framecount << 16);
     vec2 randos = get_random_numbers(seed);
     randos *= rotate2d(random(randos) * 10.);
     float tI = (iTimeI + random(uv + iTimeI)) / c * 2. * 3.1415;
@@ -531,10 +455,10 @@ vec3 sample_sphere(vec2 random_numbers) {
     if (iTimeI <= c){
 
     //RANDOM GRAIN METHOD  
-    trace(uv, randos, new, iTime);
+    // trace(uv, randos, new, iTime);
 
     //CIRCULAR METHOD
-    // trace(uv, vec2(cos(tI),sin(tI)), new, iTime);
+    trace(uv, vec2(cos(tI),sin(tI)), new, iTime);
 
     new /= c;
     col += new;

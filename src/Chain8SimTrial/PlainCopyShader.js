@@ -9,34 +9,28 @@ const PlainCopyShader = {
 
 		'tDiffuse': { value: null },
 		'opacity': { value: 1.0 },
-		'uTime': {value: 0.}
+		'uTime': { value: 0.0 },
+
+
 	},
 
-	vertexShader: glsl`
+	vertexShader: /* glsl */`
 		varying vec2 vUv;
 		void main() {
 			vUv = uv;
 			gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
 		}`,
 
-	fragmentShader: glsl`
+	fragmentShader: /* glsl */`
 		uniform float opacity;
 		uniform sampler2D tDiffuse;
 		varying vec2 vUv;
 		void main() {
-			vec2 uv = vUv;
-
-			float cirmask = length(uv - 0.5);
-
-
-			vec4 col = texture2D( tDiffuse, vUv );
-
-			col *= smoothstep(vec4(.0),vec4(.1),col);
-
-
-			col = pow(col,vec4(.5));
-			gl_FragColor = col;
+			vec3 col = texture2D( tDiffuse, vUv ).xyz;
 			
+
+			gl_FragColor = vec4(col,1.);
+		
 		}`
 
 };

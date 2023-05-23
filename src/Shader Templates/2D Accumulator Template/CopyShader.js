@@ -1,70 +1,50 @@
 /**
- * Afterimage shader
- * I created this effect inspired by a demo on codepen:
- * https://codepen.io/brunoimbrizi/pen/MoRJaN?page=1&
+ * Full-screen textured quad shader
  */
 
- import type { IUniform, Texture } from 'three'
- import type { IShader } from 'three-stdlib/shaders/types'
- import glsl from 'glslify'
- 
- export type AfterimageShaderUniforms = {
-   damp: IUniform<number>
-   tNew: IUniform<Texture | null>
-   tOld: IUniform<Texture | null>
-   d: IUniform<Texture | null>
-   time: IUniform<number>
-   framecount: IUniform<number>
- }
- 
- export interface IAfterimageShader extends IShader<AfterimageShaderUniforms> {}
- 
- export const AfterimageShader: IAfterimageShader = {
-   uniforms: {
-     damp: { value: 0.96 },
-     time: {value: 0},
-     framecount: {value: 0},
-     tOld: { value: null },
-     tNew: { value: null },
-     d: { value: null },
-     
-   },
- 
-   
-   vertexShader: glsl`
-    
-     varying vec2 vUv;
- 
-     void main() {
- 
-     vUv = uv;
-     gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+import glsl from 'glslify'
+
+
+const CopyShader = {
+
+	uniforms: {
+
+		'tDiffuse': { value: null },
+		'opacity': { value: 1.0 },
+        'uTime': {value: 0.}
+
+	},
+
+	vertexShader: glsl`
+		varying vec2 vUv;
+
+		
+        void main() {
+			vUv = uv;
+			gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+		}`,
+
+	fragmentShader: glsl`
+		// uniform float opacity;
+		// uniform sampler2D tDiffuse;
+        // uniform float time;
+		 varying vec2 vUv;
      
 
-     }`
-   ,
- 
-   fragmentShader: glsl`
-    
-     uniform float damp;
-     uniform float time;
-     uniform int framecount;
- 
-      uniform sampler2D tOld;
-     uniform sampler2D tNew;
-     uniform sampler2D d;
+        precision highp float;
+// #pragma glslify: random = require(glsl-random)
+// #pragma glslify: snoise4 = require(glsl-noise/simplex/2D)
 
- 
-     varying vec2 vUv;
-
-     #define M_PI 3.141592653589793238462643
-
-
-vec4 when_gt( vec4 x, float y ) {
-  return max( sign( x - y ), 0.0 );
-}
- 
-
+//
+// Description : Array and textureless GLSL 2D/3D/4D simplex
+//               noise functions.
+//      Author : Ian McEwan, Ashima Arts.
+//  Maintainer : ijm
+//     Lastmod : 20110822 (ijm)
+//     License : Copyright (C) 2011 Ashima Arts. All rights reserved.
+//               Distributed under the MIT License. See LICENSE file.
+//               https://github.com/ashima/webgl-noise
+//
 
 vec3 mod289(vec3 x) {
   return x - floor(x * (1.0 / 289.0)) * 289.0;
@@ -316,234 +296,121 @@ float sdRoundedBox( in vec2 p, in vec2 b, in vec4 r )
 }
 
 
-float noise (in vec2 st) {
-  vec2 i = floor(st);
-  vec2 f = fract(st);
-
-  // Four corners in 2D of a tile
-  float a = random(i);
-  float b = random(i + vec2(1.0, 0.0));
-  float c = random(i + vec2(0.0, 1.0));
-  float d = random(i + vec2(1.0, 1.0));
-
-  vec2 u = f * f * (3.0 - 2.0 * f);
-
-  return mix(a, b, u.x) +
-          (c - a)* u.y * (1.0 - u.x) +
-          (d - b) * u.x * u.y;
-}
-
-#define OCTAVES 10
-float fbm (in vec2 st) {
-  // Initial values
-  float value = 0.0;
-  float amplitude = .5;
-  float frequency = 0.;
-  //
-  // Loop of octaves
-  for (int i = 0; i < OCTAVES; i++) {
-      value += amplitude * noise(st);
-      st *= 2.;
-      amplitude *= .1;
-  }
-  return value;
-}
-
-
 //2D RAY FUNCTIONS
 
 
 void addObj(inout float dist, inout vec3 color, float d, vec3 c) {
-  if (dist > d) {
-      dist = d;
-      color = c;
-  }
+    if (dist > d) {
+        dist = d;
+        color = c;
+    }
 }
 
-void scene(in vec2 pos, inout vec3 color, out float dist, in float time) {
-  pos -= 0.5;
+void scene(in vec2 pos, out vec3 color, out float dist, in float time) {
+pos -= 0.5;
+    pos *= rotate2d(time*.1);
+    //pos -= 0.5;
+    float Box = sdBox((pos - 0.5),vec2(.01,.25));
 
-vec2 BC = pos;
+    float roundBox = sdRoundedBox(pos,vec2(.25,.25),vec4(.001 - sin(time*.2)*.5));
+    dist = 1.; color = vec3(0.,0.,0.);
 
-
-// BC *= rotate2d(time*.5);
-  float Cir = length((BC + cnoise2(BC* 2.)*length(BC  * sin(time))))-0.2;
-  Cir = length(sdBox(BC * cnoise2(BC * 30.)*.4  + fbm(pos*500.)*.6,vec2(.05)));
-  vec3 circol = normalize(vec3(dot(fract(BC),abs(pos))))*.7 ;
-  // circol += sin(pos.x * 10000.);
-
-  //  circol -= length(pos)*.1;
-  // circol *= sin(circol * 5.)*20.;
-  circol.xz *= rotate2d(sin(pos.y* 10.) * cos(pos.x*10.) * cnoise2(pos * 10.)*100.);
-  circol.yz *= rotate2d(sin(pos.y* 1.) * cos(pos.x*10.) * cnoise2(pos * 10.)*10.);
-  circol.xy *= rotate2d(sin(pos.y* 10.) * cos(pos.x*10.) * cnoise2(pos * 10.)*10.);
-
-  // circol -= dot(-pos, circol.xy);
-  dist = .001;
-  
+vec2 noisecoords = pos;
+noisecoords *= rotate2d(cnoise2(pos*3. * cnoise2(vec2(time*.5,pos.y))*.5 + time*.2));
+// noisecoords *= scale(vec2(cnoise2(vec2(sin(time*.001 + 100.)*4.,0.))))*10.;
+    vec3 boxcol = vec3(sin(roundBox*500. * smoothstep(-abs(sin(time*.3))*2.,abs(sin(time*.2))*2.,cnoise2(vec2(noisecoords.x + time*.1,noisecoords.y - time*.2)*20.)) + time));
 
 
-  // for (int i = 0; i < 5; i ++){
-
-  //   BC -= float(i) / 20.;
-  //   float Cir = length(BC*5.);
-  // vec3 circol = vec3(2.);
-  // dist = .1;
-  // addObj(dist, color, Cir, circol);
-
-  // }
-
-  vec3 boxcol = vec3(.01);
-  float Box = sdBox(BC,vec2(.35,.35));
- 
-  Cir = mix(Box,Cir,sin(pos.y*100.));
-  addObj(dist, color, Cir, circol);
-
-  // float Box2 = sdBox((pos - 0.2),vec2(.1));
-  // addObj(dist, color, Box2, vec3(sin(time), 1.,1.));
-  
-  
+    addObj(dist, color, roundBox, boxcol);
+    
+    
 }
 
-
-
-
-
-
-
-void trace(vec2 p, vec2 dir, inout vec3 c,in float time)  {
-  for (int j = 0; j < 200; j++) {
-      float d;
-      scene(p, c, d, time);
-      if (d < 1e-8) {
-          return;
-      }
-      if (d > 1.) break;
-      p -= dir * d;
-  }
+void trace(vec2 p, vec2 dir, out vec3 c,in float time)  {
+    for (int j = 0; j < 3; j++) {
+        float d;
+        scene(p, c, d, time);
+        if (d < 1e-3) {
+            //c = vec3(0,.1,0);
+            return;
+        }
+        if (d > 1e1) break;
+        p -= dir * d;
+    }
+    c = vec3(0,0,0);
 }
 
-// #define SAMPLES 100
-
-vec2 get_random_numbers(inout uvec2 seed) {
-  // This is PCG2D: https://jcgt.org/published/0009/03/02/
-  seed = 1664525u * seed + 1013904223u;
-  seed.x += 1664525u * seed.y;
-  seed.y += 1664525u * seed.x;
-  seed ^= (seed >> 16u);
-  seed.x += 1664525u * seed.y;
-  seed.y += 1664525u * seed.x;
-  seed ^= (seed >> 16u);
-  // Convert to float. The constant here is 2^-32.
-  return vec2(seed) * 2.32830643654e-10;
-}
+#define SAMPLES 20
 
 
-// Given uniform random numbers u_0, u_1 in [0,1)^2, this function returns a
-// uniformly distributed point on the unit sphere (i.e. a random direction)
-// (omega)
-vec3 sample_sphere(vec2 random_numbers) {
-  float z = 2.0 * random_numbers[1] - 1.0;     
-  float phi = 2.0 * M_PI * random_numbers[0];     
-  float x = cos(phi) * sqrt(1.0 - z * z);     
-  float y = sin(phi) * sqrt(1.0 - z * z);     
-  return vec3(x, y, z);
-}
+  //------------------------------------------------------------------------------------------------------------
+  //------------------------------------------------------------------------------------------------------------
+  //------------------------------------------------------------------------------------------------------------
+  //------------------------------------------------------------------------------------------------------------
+  //------------------------------------------------------------------------------------------------------------
 
 
-// Like sample_sphere() but only samples the hemisphere where the dot product
-// with the given normal (n) is >= 0
-// vec3 sample_hemisphere(vec2 random_numbers, vec3 normal) {
-//   vec3 direction = sample_sphere(random_numbers);     
-//   if (dot(normal, direction) < 0.0)         direction -= 2.0 * dot(normal, direction) * normal;
-//        return direction;
-// }
-
-
-// vec3 get_ray_radiance(vec3 origin, vec3 direction, inout uvec2 seed) {
-//   vec3 radiance = vec3(0.0);
-//   vec3 throughput_weight = vec3(1.0);
-//   for (int i = 0; i != MAX_PATH_LENGTH; ++i) 
-//   {         float t;         
-//             triangle_t tri;         
-//             if (ray_mesh_intersection(t, tri, origin, direction)) 
-//             {             radiance += throughput_weight * tri.emission;
-//                            origin += t * direction;
-//                            direction = sample_hemisphere(get_random_numbers(seed), tri.normal);
-//                             throughput_weight *= tri.color * 2.0 * dot(tri.normal, direction);}        
-//                              else  break;     }
-//   return radiance;
-// }
+  uniform sampler2D uScene;
+  //uniform vec2 uResolution;
+  uniform float uTime;
 
 
 
 
+  //------------------------------------------------------------------------------------------------------------
+  //------------------------------------------------------------------------------------------------------------
+  //------------------------------------------------------------------------------------------------------------
+  //------------------------------------------------------------------------------------------------------------
+  //------------------------------------------------------------------------------------------------------------
 
+  void main() {
+    #pragma glslify: snoise4 = require(/Users/charlesabbott/Desktop/Code/r3fvite/node_modules/glsl-noise/simplex/4d.glsl) 
 
-
-
-
-
-    void main() {
- 
-    vec4 texelOld = texture2D( tOld, vUv );
-    vec4 texelNew = texture2D( tNew, vUv );
     vec2 uv = vUv;
-    float iTime = time;
+    vec3 color = texture2D(uScene, uv).rgb;
+    float iTime = uTime;
+    //Time Offset
+    float iTimeOffset = 0.;
+    iTime += iTimeOffset;
 
-    vec3 col = texelOld.xyz;
+    //Utility
+    float speed = 0.;
+    float waveAmpOffset = .8;
+    float Wave = (sin(iTime * speed + iTimeOffset) + waveAmpOffset) * 0.5;
 
-  //   for (int i = 0; i < SAMPLES; i++) {
-  //     float t = (float(i) + random(uv+float(i))) / float(SAMPLES) * 2. * 3.1415;
-  //     vec3 c;
-  //     trace(uv, vec2(cos(t), sin(t)), c, iTime);
-  //     col += c;
-  // }
-  // col /= float(SAMPLES);
+    //UV Basis and Expansion
+    //uv += 0.5;
+    uv *= 1.;
 
+    //Repetition and Cells
+    vec2 gv = fract(uv);
+    vec2 cell = floor(uv);
+
+       //Cell Isolation
+    vec2 cellID = vec2(0.,0.);
+    if (cell == cellID) gv *= vec2(1.);
+    //Lines
+    //Center Line
+    float a = iTime;
+    vec2 n = vec2(sin(a),cos(a));
+    float d = abs(dot(gv - 0.5,n));
+    //Grid Line
+    float lineX = smoothstep(0.01,0.01,abs(gv.y));
+    float lineY = smoothstep(0.01,.01,abs(gv.x));
+    float lineAngle = smoothstep(.0,.01,d-0.01);
+
+    vec3 col = vec3(1.,10.,0.);
+
+    
+    
+    gl_FragColor = vec4(col,col.x);
+    // gl_FragColor = snoise4(vec4(1.));
   
-    float t = (random(uv)) / 3. * 2. * 3.1415;
-    float t2 = (1. + random(uv + 1.)) / 3. * 2. * 3.1415;
-    float t3 = (2. + random(uv + 2.)) / 3. * 2. * 3.1415;
-
-    // vec3 past1;
-    // trace(uv, vec2(cos(t), sin(t)), past1, iTime);
-    // vec3 past2;
-    // trace(uv, vec2(cos(t2), sin(t2)), past2, iTime);
-    // vec3 past3;
-    // trace(uv, vec2(cos(t3), sin(t3)), past3, iTime);
-    // col += past1 + past2 + past3;
-    // col /= 3.;
-
-    float c = float(450);
-    c = time + 1000.;
-    c = float(framecount) + 1.;
-
   
-    float iTimeI = float(framecount);
-    uvec2 seed = uvec2((gl_FragCoord + time)) ^ uvec2(framecount << 16 );
-    vec2 randos = get_random_numbers(seed);
-    randos *= rotate2d(random(randos) * 10.);
-    float tI = (iTimeI + random(uv + iTimeI)) / c * 2. * 3.1415;
-
-    vec3 new;
-
-    if (iTimeI <= c){
-
-    //RANDOM GRAIN METHOD  
-    trace(uv, randos, new, iTime);
-
-    //CIRCULAR METHOD
-    // trace(uv, vec2(cos(tI),sin(tI)), new, iTime);
-
-    new /= c;
-    col += new;
   }
+    
+    `
 
+};
 
-gl_FragColor = vec4(col,1.);
-
- 
-
-     }`
- }
+export { CopyShader };

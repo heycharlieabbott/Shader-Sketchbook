@@ -4,7 +4,7 @@ import { Canvas } from "@react-three/fiber";
 import {useState, useEffect } from "react";
 import Recorder from './Recorder.jsx';
 import { button, folder, Leva, useControls } from 'leva'
-import {EffectChain} from './Chain7AccumTrial/EffectChain.tsx'
+import {EffectChain} from './Chain8SimTrial/EffectChain.tsx'
 
 function App() {
 
