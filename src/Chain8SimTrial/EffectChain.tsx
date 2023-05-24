@@ -20,6 +20,7 @@ const EffectChain = () =>{
     airef.current.uniforms.framecount.value = frameCount.current;
     airef.current.uniforms.time.value = clock.elapsedTime;
     shref.current.uniforms.uTime.value = clock.elapsedTime;
+    shref.current.uniforms.framecount.value = frameCount.current;
     ccref.current.uniforms.uTime.value = clock.elapsedTime;
 
   });

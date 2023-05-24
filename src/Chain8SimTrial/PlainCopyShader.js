@@ -29,6 +29,7 @@ const PlainCopyShader = {
 			vec3 col = texture2D( tDiffuse, vUv ).xyz;
 			
 
+			col *= 2.;
 			gl_FragColor = vec4(col,1.);
 		
 		}`

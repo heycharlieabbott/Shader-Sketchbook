@@ -349,14 +349,14 @@
 
 
      
-     int GetNeighbors(sampler2D buff, vec2 uv){
+     int GetNeighbors(sampler2D buff, ivec2 uv){
         int num = 0;
-        float thresh = .3;
+        float thresh = .5;
 
         for (int y=-1; y<=1; y++){
-          for (int x = -1; x < 1; x++){
+          for (int x = -1; x <= 1; x++){
             if (x == 0 && y == 0) continue;
-            num += texture2D(buff, uv + vec2(x,y)).r > thresh ? 1 : 0;
+            num += texelFetch(buff, uv + ivec2(x,y),0).r > thresh ? 1 : 0;
           }
         }
         return num;
@@ -365,47 +365,108 @@
  
     void main() {
  
-    vec4 texelOld = texture2D( tOld, vUv);
-    vec4 texelNew = texture2D( tNew, vUv );
+   // vec4 texelOld = texture2D( tOld, abs(cos(vUv * .95 + time*.001)));
+    vec4 texelOld = texture2D( tOld, vUv * (.999) + sin(time)*.0001 + cos(time) * .001 + length(vUv- 0.5)*.001);
+
+	vec4 texelNew = texture2D( tNew, vUv * 0.01 );
+
+
 
     vec2 uv = vUv;
 
     float iTime = time;
 
-    vec3 col;
-    if ( framecount < 20){
-      col = texelNew.xyz;
-    }
-    else{
-      int n = GetNeighbors(tOld, uv);
+    vec4 col;
 
-      float avg = (texelNew.r + texelNew.g + texelNew.b) / 3.;
+    
+      int n = GetNeighbors(tOld, ivec2(gl_FragCoord));
 
-      bool thresh = avg > .1;
+      float avg = (texelOld.r + texelOld.g + texelOld.b) / 3.;
+
+      bool thresh = avg > .9;
 
       float next = 0.;
 
-      if (thresh && (n ==0 || n == 3)){
-        col = vec3(cnoise2(uv * avg * 1000.));
-        next = 1.;
-      }
+	  vec4 hey = texture2D(tNew, uv - sin(cnoise2(vec2(texelOld.w*.02)))*10.1);
 
-     else if (thresh && n <= 2){
-        col = vec3(cnoise2(uv*10.));
-      }
+	  
+	  if (framecount < 20){
+		col.xyz = vec3(texelNew.xyz);
+	  
+	  }
 
-      else if (!thresh && n == 3){
-        col = vec3(cnoise2(uv* 100.+ 10.));
-        next = 1.;
-      }
-      
-      else col = vec3(random(uv));
+	//   float c = 
 
-      col = vec3(col);
+    //   if (thresh && (n ==0 || n == 1)){
+		
+    //     col = vec3(cnoise2(uv *100.));
+    //     next = 1.;
+    //   }
 
-    };
+    //  else if (thresh && n >=4){
+    //     col = vec3(cnoise2(uv*100. + (texelOld.a)));
+    //   }
+
+    //   else if (n <= 3){
+    //     col = vec3(fbm(uv* 1000. + texelOld.a));
+    //     next = 1.;
+    //   }
+
+	//   else if (n == 5){
+	// 	col = vec3(.9);
+	//   }
+
+	// else if (n == 3){
+	// 	//col = texelOld.xyz + vec3(.01);
+	// 	col = sin(texture2D(tOld, vec2(cnoise2(uv * 10. + float(n)*1.1),sin(uv.y* 1000.))).xyz* 1000.)*10.9;
+	// }
+
+
+	// else if (n >= 1){
+	// 	//col = texelOld.xyz + vec3(.01);
+	// 	col = vec3(random(uv + texelOld.a));
+	// }
+
+
+    else {
+		bool alive = texelFetch(tOld, ivec2(gl_FragCoord),0).r > .01;
+		int next = 0;
+
+		if (alive && (n ==1 || n == 2)){
+			next = 1;
+			next *= int(floor(random(uv)*10.));
+		}
+		else if (!alive && n == 3){
+			next = 1;
+			next -= int(floor(random(uv + time)*10.));
+		}
+		else next = 0;
+		
+		// col.xyz = vec3(cnoise2((uv* 1000.) * texelOld.w));
+		// col.w = float(next);
+		col = vec4(next);	
+	
+	}
+
+
+	// col = texelOld.xyz;
+
+
+    float a = float(n);
+
+	col = vec4(mix(col,texelOld,.9));
+
+	// col.xy *= rotate2d(texelOld.w*.1);
+	// col.yz *= rotate2d(texelOld.x * .1);
+	//  col.yz *= rotate2d(texelOld.x * .1);
+
+	//col = normalize(col);
+
+	// col = clamp(vec4(0.9),vec4(1.),col);
+
+	
  
-    gl_FragColor = vec4(col,1.);
+    gl_FragColor = vec4(col);
 
      }`
  }

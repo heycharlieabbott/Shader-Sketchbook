@@ -10,6 +10,7 @@ const CopyShader = {
 		'tDiffuse': { value: null },
 		'opacity': { value: 1.0 },
 		'uTime': { value: 0.0 },
+		'framecount': {value: 0}
 
 
 	},
@@ -26,6 +27,7 @@ const CopyShader = {
 		uniform sampler2D tDiffuse;
 		varying vec2 vUv;
 		uniform float uTime;
+		uniform int framecount;
 
 
 		vec4 when_gt( vec4 x, float y ) {
@@ -321,11 +323,16 @@ const CopyShader = {
 			gl_FragColor = texture2D( tDiffuse, vUv );
 			vec2 uv = vUv;
 			float time = uTime;
-			vec3 n = vec3(random(uv));
+			vec3 n = vec3(cnoise2(uv*10000.))*3.;
 
-			n = step(.1,n);
-
+			 n = step(.1,n);
 			vec3 col = n;
+
+			// if (framecount < 20){
+			// 	col = n;
+
+			// }
+			// else col = vec3(0.);
 			gl_FragColor.xyz = col;
 		}`
 
