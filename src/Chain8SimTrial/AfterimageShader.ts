@@ -366,10 +366,13 @@
     void main() {
  
    // vec4 texelOld = texture2D( tOld, abs(cos(vUv * .95 + time*.001)));
-    vec4 texelOld = texture2D( tOld, vUv * (.999) + sin(time)*.0001 + cos(time) * .001 + length(vUv- 0.5)*.001);
+    vec4 texelOld = texture2D( tOld, vUv * (.99) + sin(time*.2)*.0001 + cos(time*.2) * .05 + length(vUv- 0.5)*.1 * cnoise2(vUv*2.));
 
-	vec4 texelNew = texture2D( tNew, vUv * 0.01 );
+	texelOld += fbm(vUv*100. - 0.5)*.01;
+	vec4 texelNew = texture2D( tNew, vUv );
 
+	vec4 texN = texture2D( tNew, vUv);
+	vec4 texO = texture2D( tNew, vUv);
 
 
     vec2 uv = vUv;
@@ -387,7 +390,7 @@
 
       float next = 0.;
 
-	  vec4 hey = texture2D(tNew, uv - sin(cnoise2(vec2(texelOld.w*.02)))*10.1);
+	//   vec4 hey = texture2D(tNew, uv - sin(cnoise2(vec2(texelOld.w*.02)))*10.1);
 
 	  
 	  if (framecount < 20){
@@ -429,7 +432,7 @@
 
 
     else {
-		bool alive = texelFetch(tOld, ivec2(gl_FragCoord),0).r > .01;
+		bool alive = texelFetch(tOld, ivec2(gl_FragCoord),0).r > .6;
 		int next = 0;
 
 		if (alive && (n ==1 || n == 2)){
@@ -454,17 +457,20 @@
 
     float a = float(n);
 
-	col = vec4(mix(col,texelOld,.9));
+	col.xyz = vec3(mix(col,texelOld,.6) + distance(texelOld.x, next)*.05);
+
+	
 
 	// col.xy *= rotate2d(texelOld.w*.1);
 	// col.yz *= rotate2d(texelOld.x * .1);
 	//  col.yz *= rotate2d(texelOld.x * .1);
 
-	//col = normalize(col);
+
+	// col = normalize(col);
 
 	// col = clamp(vec4(0.9),vec4(1.),col);
 
-	
+
  
     gl_FragColor = vec4(col);
 

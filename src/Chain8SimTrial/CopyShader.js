@@ -323,10 +323,12 @@ const CopyShader = {
 			gl_FragColor = texture2D( tDiffuse, vUv );
 			vec2 uv = vUv;
 			float time = uTime;
-			vec3 n = vec3(cnoise2(uv*10000.))*3.;
+			vec3 n = vec3(cnoise2(uv*100.))*3.;
 
 			 n = step(.1,n);
 			vec3 col = n;
+
+			//col = vec3(random(uv));
 
 			// if (framecount < 20){
 			// 	col = n;
