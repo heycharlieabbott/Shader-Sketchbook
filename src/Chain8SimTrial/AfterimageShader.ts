@@ -399,9 +399,9 @@
 	  
 	  }
 
-	  else if (framecount % 1 != 0){
-		col = texO;
-	  }
+	//   else if (framecount % 10 != 0){
+	// 	col = texO;
+	//   }
 
     else {
 		

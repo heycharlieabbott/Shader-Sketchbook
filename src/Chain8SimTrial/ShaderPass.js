@@ -32,6 +32,7 @@ class ShaderPass extends Pass {
 			} );
 
 		}
+		
 
 		this.fsQuad = new FullScreenQuad( this.material );
 
@@ -47,11 +48,11 @@ class ShaderPass extends Pass {
 
 		this.fsQuad.material = this.material;
 
+
 		if ( this.renderToScreen ) {
 
 			renderer.setRenderTarget( null );
 			this.fsQuad.render( renderer );
-
 		} else {
 
 			renderer.setRenderTarget( writeBuffer );

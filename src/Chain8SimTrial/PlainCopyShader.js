@@ -10,6 +10,8 @@ const PlainCopyShader = {
 		'tDiffuse': { value: null },
 		'opacity': { value: 1.0 },
 		'uTime': { value: 0.0 },
+		'resX': {value : 0.0},
+		'resY': {value: 0.0}
 
 
 	},
@@ -26,6 +28,8 @@ const PlainCopyShader = {
 		uniform sampler2D tDiffuse;
 		varying vec2 vUv;
 		uniform float uTime;
+		uniform float resX;
+		uniform float resY;
 
 		vec4 when_gt( vec4 x, float y ) {
 			return max( sign( x - y ), 0.0 );
@@ -317,22 +321,23 @@ const PlainCopyShader = {
 		  }
 
 
-		  vec4 hey(sampler2D img, vec2 uv){
+		  vec4 hey(sampler2D img, vec2 uv, vec2 res, float time ){
 			vec4 colX = vec4(0.);
 			vec4 colY = vec4(0.);
 			vec4 col = vec4(0.);
+
+	
+			
 			
 
 			for (int x = -5; x < 5; x++ ){
 				colX = texelFetch(img, ivec2(uv) + ivec2(x,0), 0);
 				for (int y = -5; y < 5; y++){
 
-					//uv *= rotate2d(colX.x * 100.);
+					vec2 mods = mod(vec2(uv.x, uv.y),vec2(res.x,res.y) / 2.);
 
 
-						colY += texelFetch(img, ivec2(uv) + ivec2(x,y), 0);
-						//colY /= mix(colX,colY,vec4(fbm(uv * vec2(x,y))));
-					
+						colY += texelFetch(img, ivec2(mods) - ivec2(x,y), 0);					
 				}
 				
 			}
@@ -345,14 +350,16 @@ const PlainCopyShader = {
 		void main() {
 			float time = uTime;
 
-			float SIZE = 2.;
+			float SIZE = 1.;
 
 			vec2 uv = vUv;
 			vec4 col = (texture2D( tDiffuse, uv / SIZE));
 
-			vec4 blur = hey(tDiffuse , gl_FragCoord.xy / SIZE);
+			
 
-			col += mix(col,blur,2.)*1.1;
+			vec4 blur = hey(tDiffuse , gl_FragCoord.xy / SIZE, vec2(resX, resY) / SIZE, time);
+
+			col += mix(col,blur,1.)*1.1;
 			float c = distance(col.w,col.z);
 
 		
@@ -369,14 +376,19 @@ const PlainCopyShader = {
 
 			// float uvxp = pow(sin(uv.x*30. + sin(time)),30.)*.9 + sin(uv.y)*3.;
 			// col -= smoothstep(0.2,1.,(uvxp))*2.;
+			col.yz *= rotate2d(snoise3(vec3(uv*10.,time))*.3);
 
 			col.xy *= rotate2d(1.-uv.y + time*.1);
 			col.xy += smoothstep(.0,.1 * x.r,1.-uv.y*.1);
 
-			
-			
 
-			col = pow(col,vec4(2.1));
+			//col += (smoothstep(-.1,.8,length(uv - 0.5)))*sin(time);
+
+			col /= 1.1;
+
+		
+
+			col *= pow(col,vec4(.01));
 			
 			gl_FragColor = vec4(col);
 		
