@@ -334,7 +334,7 @@ const PlainCopyShader = {
 				colX = texelFetch(img, ivec2(uv) + ivec2(x,0), 0);
 				for (int y = -5; y < 5; y++){
 
-					vec2 mods = mod(vec2(uv.x, uv.y),vec2(res.x,res.y) / 2.);
+					vec2 mods = mod(vec2(uv.x, uv.y),vec2(res.x,res.y));
 
 
 						colY += texelFetch(img, ivec2(mods) - ivec2(x,y), 0);					
@@ -350,7 +350,7 @@ const PlainCopyShader = {
 		void main() {
 			float time = uTime;
 
-			float SIZE = 1.;
+			float SIZE = 1.5 + sin(time)*.1 + vUv.y;
 
 			vec2 uv = vUv;
 			vec4 col = (texture2D( tDiffuse, uv / SIZE));
@@ -370,7 +370,8 @@ const PlainCopyShader = {
 			
 			vec4 x = vec4(distance(vec4(cir),col));
 
-			col /= sin(x*20. + time);
+
+			col *= sin(x * 20.+ time)+ 1.;
 			
 			// x = pow(x,vec4(.1))*2.;
 
@@ -388,7 +389,9 @@ const PlainCopyShader = {
 
 		
 
-			col *= pow(col,vec4(.01));
+			col = pow(col,vec4(8.1));
+
+			col = clamp(vec4(0.),vec4(1.),col);
 			
 			gl_FragColor = vec4(col);
 		
