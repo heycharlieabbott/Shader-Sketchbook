@@ -360,7 +360,7 @@
           }
         }
 
-		num += texelFetch(buff, uv + ivec2(1,200),0).r > thresh ? 1 : 0;
+		num += texelFetch(buff, uv + ivec2(2,2),0).r > thresh ? 1 : 0;
 
         return num;
      }
@@ -369,14 +369,18 @@
     void main() {
  
    // vec4 texelOld = texture2D( tOld, abs(cos(vUv * .95 + time*.001)));
-    vec4 texelOld = texelFetch( tOld, ivec2(vUv * (.99) + sin(time*.2)*.0001 + cos(time*.2) * .05 + length(vUv- 0.5)*.1 * cnoise2(vUv*2.)),0);
+//    vec4 texelOld = texelFetch( tOld, ivec2(vUv * (.99) + sin(time*.2)*.0001 + cos(time*.2) * .05 + length(vUv- 0.5)*.1 * cnoise2(vUv*2.)),0);
+	// vec4 texelOld = texelFetch( tOld, ivec2(vUv),0);
+
 
 	//texelOld += fbm(vUv*100. - 0.5)*.01;
 	vec4 texelNew = texelFetch( tNew, ivec2(gl_FragCoord), 0 );
 
 	vec4 texN = texture2D( tNew, vUv);
-	vec4 texO = texture2D( tNew, vUv);
+	vec4 texO = texture2D( tOld, vUv);
 
+
+	int FC = framecount;
 
     vec2 uv = vUv;
 
@@ -385,12 +389,18 @@
     vec4 col;
 
     
-      int n = GetNeighbors(tOld, ivec2(gl_FragCoord));
+		int n = GetNeighbors(tOld, ivec2(gl_FragCoord));
+
+
 
 	  
 	  if (framecount < 20){
 		col = vec4(texelNew.x);
 	  
+	  }
+
+	  else if (framecount % 1 != 0){
+		col = texO;
 	  }
 
     else {

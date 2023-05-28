@@ -315,33 +315,70 @@ const PlainCopyShader = {
 			}
 			return value;
 		  }
+
+
+		  vec4 hey(sampler2D img, vec2 uv){
+			vec4 colX = vec4(0.);
+			vec4 colY = vec4(0.);
+			vec4 col = vec4(0.);
+			
+
+			for (int x = -5; x < 5; x++ ){
+				colX = texelFetch(img, ivec2(uv) + ivec2(x,0), 0);
+				for (int y = -5; y < 5; y++){
+
+					//uv *= rotate2d(colX.x * 100.);
+
+
+						colY += texelFetch(img, ivec2(uv) + ivec2(x,y), 0);
+						//colY /= mix(colX,colY,vec4(fbm(uv * vec2(x,y))));
+					
+				}
+				
+			}
+
+			col = colY / 32.;
+
+			return col;
+		  }
 	
 		void main() {
 			float time = uTime;
 
-			float SIZE = 100.;
+			float SIZE = 2.;
 
 			vec2 uv = vUv;
 			vec4 col = (texture2D( tDiffuse, uv / SIZE));
+
+			vec4 blur = hey(tDiffuse , gl_FragCoord.xy / SIZE);
+
+			col += mix(col,blur,2.)*1.1;
 			float c = distance(col.w,col.z);
 
 		
 			vec2 gv = fract(gl_FragCoord.xy / SIZE) - 0.5;
 
 
-			// gv = mix(gv,vec2(gv.x * col.r,gv.y * col.r),sin(time*.1));
+			float cir = smoothstep(0.1,.81,length(gv));
+			
+			vec4 x = vec4(distance(vec4(cir),col));
 
+			col /= sin(x*20. + time);
+			
+			// x = pow(x,vec4(.1))*2.;
 
-//			float x = distance(length(sin(gv*10.)),col.r * (length(uv - 0.5)));
+			// float uvxp = pow(sin(uv.x*30. + sin(time)),30.)*.9 + sin(uv.y)*3.;
+			// col -= smoothstep(0.2,1.,(uvxp))*2.;
+
+			col.xy *= rotate2d(1.-uv.y + time*.1);
+			col.xy += smoothstep(.0,.1 * x.r,1.-uv.y*.1);
 
 			
-			float x = distance(length(gv),col.r);
-
-			
 			
 
+			col = pow(col,vec4(2.1));
 			
-			gl_FragColor = vec4(x);
+			gl_FragColor = vec4(col);
 		
 		}`
 
