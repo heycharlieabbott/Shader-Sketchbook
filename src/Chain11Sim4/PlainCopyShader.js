@@ -338,8 +338,8 @@ const PlainCopyShader = {
 					vec2 mods = mod(vec2(uv.x, uv.y),vec2(res.x,res.y));
 					bcol = texelFetch(img, ivec2(uv) - ivec2(x,y), 0);
 
-					if (bcol.x >= 0.5){
-						colY += bcol * smoothstep(0.4,.7,length(uv -0.5));
+					if (bcol.x >= 0.7){
+						colY += bcol * smoothstep(0.1,.7,length(uv -0.5));
 					}
 
 											
@@ -347,7 +347,7 @@ const PlainCopyShader = {
 				
 			}
 
-			col = colY / 32.;
+			col = colY / 7.;
 
 			return col;
 		  }
@@ -366,12 +366,28 @@ const PlainCopyShader = {
 			float c = distance(col.w,col.z);
 			vec2 gv = fract(gl_FragCoord.xy / SIZE) - 0.5;
 
+			
+			// col.xy *= rotate2d(c * 2.+ time);
+			// col.zy *= rotate2d(c * 1. - time);
+			// col.xz *= rotate2d(uv.x * 100. - time);
 
-			//col += blur1*.05;
+			col.xy *= abs(sin(blur1.x + time));
+
+			col.yz *= abs(sin(blur1.y + time*.2));
+
+			col -= sin(blur1 *.01 + time)*.0001;
+
+			//col.xy = mix(col.xy,abs(sin(col.xy * 20. + time)),02.);
+			//col += blur1*.5;
+
+			//blur1.xy *= rotate2d(blur1.y * 10. + time);
+
+			//col += mix(col,sin(col * 100. + time),smoothstep(0.2,.5,length(uv - 0.5)));
 
 			col = sqrt(col);
 
-			 col *= 2.1;
+			col *= 2.1;
+
 
 
 			col = pow(col,vec4(.7));

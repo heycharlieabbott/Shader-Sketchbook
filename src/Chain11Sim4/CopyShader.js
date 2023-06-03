@@ -3,15 +3,14 @@
  */
 import glsl from 'glslify'
 
-const PlainCopyShader = {
+const CopyShader = {
 
 	uniforms: {
 
 		'tDiffuse': { value: null },
 		'opacity': { value: 1.0 },
 		'uTime': { value: 0.0 },
-		'resX': {value : 0.0},
-		'resY': {value: 0.0}
+		'framecount': {value: 0}
 
 
 	},
@@ -28,8 +27,8 @@ const PlainCopyShader = {
 		uniform sampler2D tDiffuse;
 		varying vec2 vUv;
 		uniform float uTime;
-		uniform float resX;
-		uniform float resY;
+		uniform int framecount;
+
 
 		vec4 when_gt( vec4 x, float y ) {
 			return max( sign( x - y ), 0.0 );
@@ -319,70 +318,18 @@ const PlainCopyShader = {
 			}
 			return value;
 		  }
-
-
-		  vec4 blur(sampler2D img, vec2 uv, vec2 res, float time ){
-			vec4 colX = vec4(0.);
-			vec4 colY = vec4(0.);
-			vec4 col = vec4(0.);
-			vec4 bcol = vec4(0.);
-
-	
-			
-			
-
-			for (int x = -5; x < 5; x++ ){
-				//colX = texelFetch(img, ivec2(uv) + ivec2(x,0), 0);
-				for (int y = -5; y < 5; y++){
-
-					vec2 mods = mod(vec2(uv.x, uv.y),vec2(res.x,res.y));
-					bcol = texelFetch(img, ivec2(uv) - ivec2(x,y), 0);
-
-					if (bcol.x >= 0.5){
-						colY += bcol * smoothstep(0.4,.7,length(uv -0.5));
-					}
-
-											
-				}
-				
-			}
-
-			col = colY / 32.;
-
-			return col;
-		  }
-	
 		void main() {
-			float time = uTime;
 
-			float SIZE = 1.;
-
+			gl_FragColor = texture2D( tDiffuse, vUv );
 			vec2 uv = vUv;
-			vec4 col = (texture2D( tDiffuse, uv / SIZE));
+			float time = uTime;
+			vec4 n = vec4(random(uv*10.));
 
-			
-
-			vec4 blur1 = blur(tDiffuse , gl_FragCoord.xy / SIZE, vec2(resX, resY) / SIZE, time);
-			float c = distance(col.w,col.z);
-			vec2 gv = fract(gl_FragCoord.xy / SIZE) - 0.5;
-
-
-			//col += blur1*.05;
-
-			col = sqrt(col);
-
-			 col *= 2.1;
-
-
-			col = pow(col,vec4(.7));
-
-
-			col = clamp(vec4(0.),vec4(1.),col);
-			
-			gl_FragColor = vec4(col);
-		
+			  n = step(.8,n);
+			vec4 col = n;
+			gl_FragColor = col;
 		}`
 
 };
 
-export { PlainCopyShader };
+export { CopyShader };

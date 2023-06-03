@@ -370,7 +370,7 @@
           }
         }
 
-		  num += texelFetch(buff, ivec2(uv)+ ivec2(0,1),0).r > thresh ? 1. : 0.;
+		  //num += texelFetch(buff, ivec2(uv)+ ivec2(0,1),0).r > thresh ? 1. : 0.;
 
 		// num = mod(num,3.);
 
@@ -385,7 +385,7 @@
 		vec4 colY = vec4(0.);
 		vec4 col = vec4(0.);		
 
-		for (int x = -10; x < 10; x++ ){
+		for (int x = -1; x < 1; x++ ){
 			colX = texelFetch(img, ivec2(uv) + ivec2(x,0), 0);
 			for (int y = -5; y < 5; y++){
 
@@ -425,7 +425,7 @@
 	vec4 b = blur(tOld, uv, vec2(resX,resY),time);
 
 	  
-	  if (framecount < 20){
+	  if (framecount < 50){
 		col = vec4(texelNew.x);
 	  
 	  }
@@ -438,7 +438,7 @@
 		
 		//bool alive1 = texelFetch(tOld, ivec2(gl_FragCoord),0).w > .0;
 
-		 bool alive1 = b.x > .8;
+		 bool alive1 = b.x > 1.;
 
 		float next1 = 0.;
 
@@ -449,16 +449,18 @@
 			next1 = 1.;
 
 			
-			 inc /= fbm(vec2(next1,-next1) * uv + time);
+			 inc /= fbm(vec2(next1*.01,-next1*.01) * uv);
 			
 			
 		}
 		else if (!alive1 && n == 3.){
 			next1 = 1.;
+
+			vec2 m = vec2(.2);
 			
 			uv *= rotate2d(time*.1);
-			inc += fbm(vec2(next1,-next1) * uv * 10. + time);
-			inc /= b.x;
+			inc += fbm(vec2(next1,-next1) * m * uv * 20.);
+			inc -= b.x;
 
 		
 
@@ -468,7 +470,7 @@
 
 		else {
 			next1 = 0.;
-			inc *= smoothstep(sin(time)*.2,.45,length(uv - 0.5));
+			inc *= smoothstep(sin(time)*.2,1.5 + sin(time)*1.1,length(uv - 0.5));
 		}
 
 
@@ -479,7 +481,7 @@
 		col.z = inc ;
 	}
 
-	col *= mix(col,b * col,vec4(abs(sin(time)*.5)))+.5;
+	col *= mix(col,b * col,vec4(abs(sin(time)*.5)))+.7;
 
 
 
