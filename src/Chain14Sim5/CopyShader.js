@@ -3,15 +3,14 @@
  */
 import glsl from 'glslify'
 
-const PlainCopyShader = {
+const CopyShader = {
 
 	uniforms: {
 
 		'tDiffuse': { value: null },
 		'opacity': { value: 1.0 },
 		'uTime': { value: 0.0 },
-		'resX': {value : 0.0},
-		'resY': {value: 0.0}
+		'framecount': {value: 0}
 
 
 	},
@@ -28,8 +27,8 @@ const PlainCopyShader = {
 		uniform sampler2D tDiffuse;
 		varying vec2 vUv;
 		uniform float uTime;
-		uniform float resX;
-		uniform float resY;
+		uniform int framecount;
+
 
 		vec4 when_gt( vec4 x, float y ) {
 			return max( sign( x - y ), 0.0 );
@@ -319,95 +318,18 @@ const PlainCopyShader = {
 			}
 			return value;
 		  }
-
-
-		  vec4 blur(sampler2D img, vec2 uv, vec2 res, float time ){
-			vec4 colX = vec4(0.);
-			vec4 colY = vec4(0.);
-			vec4 col = vec4(0.);
-			vec4 bcol = vec4(0.);
-
-	
-			
-			
-
-			for (int x = -10; x < 10; x++ ){
-				//colX = texelFetch(img, ivec2(uv) + ivec2(x,0), 0);
-				for (int y = -5; y < 5; y++){
-
-					vec2 mods = mod(vec2(uv.x, uv.y),vec2(res.x,res.y));
-					bcol = texelFetch(img, ivec2(uv) - ivec2(x,y), 0);
-
-					if (bcol.x >= 0.1){
-						colY += bcol * smoothstep(0.1,.7,length(uv -0.5));
-					}
-
-											
-				}
-				
-			}
-
-			col = colY / 200.;
-
-			return col;
-		  }
-	
 		void main() {
-			float time = uTime;
 
-			float SIZE = 1.;
-
+			gl_FragColor = texture2D( tDiffuse, vUv );
 			vec2 uv = vUv;
-			vec4 col = (texture2D( tDiffuse, uv / SIZE));
+			float time = uTime;
+			vec4 n = vec4(random(uv*10.));
 
-			
-
-			vec4 blur1 = blur(tDiffuse , gl_FragCoord.xy / SIZE, vec2(resX, resY) / SIZE, time);
-			float c = distance(col.w,col.z);
-			vec2 gv = fract(gl_FragCoord.xy / SIZE) - 0.5;
-
-			
-			// col.xy *= rotate2d(c * 2.+ time);
-			// col.zy *= rotate2d(c * 1. - time);
-			// col.xz *= rotate2d(uv.x * 100. - time);
-
-			// col.xy *= abs(sin(blur1.x + time));
-
-			// col.yz *= abs(sin(blur1.y + time*.2));
-
-			// col -= sin(blur1 *.01 + time)*.0001;
-
-			// col.xy -= mix(col.xy,abs(sin(col.xy * 20. + time)),02.);
-
-			
-			//col += mix(col,blur1,smoothstep((sin(time)-1.)*.2,0.,col - blur1))*.1;
-
-			// col += (col.x + col.y + col.z ) / 2.;
-
-
-
-			//blur1.xy *= rotate2d(blur1.y * 10. + time);
-
-			//col += mix(col,sin(col * 100. + time),smoothstep(0.2,.9,length(uv - 0.5 + cnoise2(vec2(time*.2,-time*.5))*.02)));
-
-			// col = sqrt(col);
-
-			col *= 2.1;
-
-
-
-			col = pow(col,vec4(.8));
-
-			//col *= smoothstep(.0,0.01,(fbm((1.-uv.xy / col.xy + time)*100.)))*2.9;
-
-
-
-			col = clamp(vec4(0.),vec4(1.),col);
-			
-			gl_FragColor = vec4(col);
-		
+			  n = step(.8,n);
+			vec4 col = n;
+			gl_FragColor = col;
 		}`
 
 };
 
-export { PlainCopyShader };
+export { CopyShader };

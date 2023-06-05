@@ -338,7 +338,7 @@ const PlainCopyShader = {
 					vec2 mods = mod(vec2(uv.x, uv.y),vec2(res.x,res.y));
 					bcol = texelFetch(img, ivec2(uv) - ivec2(x,y), 0);
 
-					if (bcol.x >= 0.1){
+					if (bcol.x >= 0.){
 						colY += bcol * smoothstep(0.1,.7,length(uv -0.5));
 					}
 
@@ -347,61 +347,75 @@ const PlainCopyShader = {
 				
 			}
 
-			col = colY / 200.;
+			col = colY / 32.;
 
 			return col;
 		  }
 	
+
+		  vec2 random2( vec2 p ) {
+			return fract(sin(vec2(dot(p,vec2(127.1,311.7)),dot(p,vec2(269.5,183.3))))*43758.5453);
+		}
+
+
+
 		void main() {
 			float time = uTime;
 
-			float SIZE = 1.;
+			float SIZE = 50.;
 
 			vec2 uv = vUv;
+			uv += sin(time*.1);
+			uv *= (sin(time*.5)+3.)*.3;
 			vec4 col = (texture2D( tDiffuse, uv / SIZE));
+			vec4 b = blur(tDiffuse, uv * SIZE, vec2(resX,resY), time);
 
+			float m_dist = (sin(time)+ 1.)*.5 + .5;  // minimum distance
 			
+			m_dist = 1.;
 
-			vec4 blur1 = blur(tDiffuse , gl_FragCoord.xy / SIZE, vec2(resX, resY) / SIZE, time);
-			float c = distance(col.w,col.z);
-			vec2 gv = fract(gl_FragCoord.xy / SIZE) - 0.5;
-
-			
-			// col.xy *= rotate2d(c * 2.+ time);
-			// col.zy *= rotate2d(c * 1. - time);
-			// col.xz *= rotate2d(uv.x * 100. - time);
-
-			// col.xy *= abs(sin(blur1.x + time));
-
-			// col.yz *= abs(sin(blur1.y + time*.2));
-
-			// col -= sin(blur1 *.01 + time)*.0001;
-
-			// col.xy -= mix(col.xy,abs(sin(col.xy * 20. + time)),02.);
-
-			
-			//col += mix(col,blur1,smoothstep((sin(time)-1.)*.2,0.,col - blur1))*.1;
-
-			// col += (col.x + col.y + col.z ) / 2.;
+		
 
 
+			vec2 gv = fract(uv * SIZE) - 0.5;
+			vec2 gvid = floor(uv * SIZE) - 0.5;
+			for (int y= -1; y <= 1; y++) {
+				for (int x= -1; x <= 1; x++) {
 
-			//blur1.xy *= rotate2d(blur1.y * 10. + time);
-
-			//col += mix(col,sin(col * 100. + time),smoothstep(0.2,.9,length(uv - 0.5 + cnoise2(vec2(time*.2,-time*.5))*.02)));
-
-			// col = sqrt(col);
-
-			col *= 2.1;
+				
 
 
+					// Neighbor place in the grid
+					vec2 neighbor = vec2(float(x),float(y));			
+					vec2 point = b.zz;
+					point = col.zz;
+					vec2 diff = neighbor + point - gv;
 
-			col = pow(col,vec4(.8));
+				
 
-			//col *= smoothstep(.0,0.01,(fbm((1.-uv.xy / col.xy + time)*100.)))*2.9;
+					// Distance to the point
+					float dist = dot(diff,neighbor);
+
+
+					dist += sin((.02/dist )* 100. + time * random(gvid));
+
+					// Keep the closer distance
+					m_dist = min(m_dist, dist);
+					
+				}
+			}
 
 
 
+			col = vec4(m_dist);
+
+
+
+
+
+
+			col *= 1.;
+			col = pow(col,vec4(1.));
 			col = clamp(vec4(0.),vec4(1.),col);
 			
 			gl_FragColor = vec4(col);

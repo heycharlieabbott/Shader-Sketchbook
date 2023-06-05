@@ -432,7 +432,7 @@
 	  
 	  }
 
-	//   else if (framecount % 10 != 0){
+	//   else if (fract(time) >=0.1){
 	// 	col = texO;
 	//   }
 

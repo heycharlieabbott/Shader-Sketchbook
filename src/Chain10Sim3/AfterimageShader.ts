@@ -470,7 +470,7 @@
 
 		else {
 			next1 = 0.;
-			inc *= smoothstep(sin(time)*.2,1.5 + sin(time)*1.1,length(uv - 0.5));
+			inc *= smoothstep(sin(time)*.2,1.5 + sin(time*.5)*1.1,length(uv - 0.5));
 		}
 
 

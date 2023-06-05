@@ -4,7 +4,7 @@ import { Canvas } from "@react-three/fiber";
 import {useState, useEffect } from "react";
 import Recorder from './Recorder.jsx';
 import { button, folder, Leva, useControls } from 'leva'
-import {EffectChain} from './Chain11Sim4/EffectChain.tsx'
+import {EffectChain} from './Chain14Sim5/EffectChain.tsx'
 
 function App() {
 
@@ -33,7 +33,7 @@ function App() {
     <>
      <Canvas gl={{ preserveDrawingBuffer: true }}>
       <EffectChain/>
-      <Recorder cap={captureStarted} endTime={70} screenshot={screenShot}/>
+      <Recorder cap={captureStarted} endTime={35} screenshot={screenShot}/>
     </Canvas>
     </>
   )
