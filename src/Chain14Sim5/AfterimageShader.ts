@@ -432,13 +432,13 @@
 	  
 	  }
 
-	  else if (int(floor(time)) % 2 != 0){
+	  else if (int(floor(time* 100.)) % 5 != 0){
 		col = texO;
 	  }
 
     else {
 		
-		bool alive1 = texelFetch(tOld, ivec2(gl_FragCoord),0).w > .5;
+		bool alive1 = texelFetch(tOld, ivec2(gl_FragCoord),0).w > .4;
 
 		//  bool alive1 = b.x > .5;
 
@@ -451,7 +451,7 @@
 			next1 = 1.;
 
 			
-			 inc /= fbm(vec2(next1*.1,-next1*.01) * uv);
+			 //inc /= fbm(vec2(next1*.1,-next1*.01) * uv);
 			 next1 += inc;
 			
 			

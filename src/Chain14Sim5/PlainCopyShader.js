@@ -362,12 +362,16 @@ const PlainCopyShader = {
 		void main() {
 			float time = uTime;
 
-			float SIZE = 50.;
+			float SIZE = 30.;
 
 			vec2 uv = vUv;
-			uv += sin(time*.1);
-			uv *= (sin(time*.5)+3.)*.3;
+			uv += (sin(time*.1)+1.) * 0.5;
+			 uv *= (sin(time*.2)+3.)*.3 + cnoise2(vec2(time*.1,-time*.1))*.2;
 			vec4 col = (texture2D( tDiffuse, uv / SIZE));
+
+			vec4 uncol = (texture2D( tDiffuse, uv / SIZE));
+
+
 			vec4 b = blur(tDiffuse, uv * SIZE, vec2(resX,resY), time);
 
 			float m_dist = (sin(time)+ 1.)*.5 + .5;  // minimum distance
@@ -379,6 +383,8 @@ const PlainCopyShader = {
 
 			vec2 gv = fract(uv * SIZE) - 0.5;
 			vec2 gvid = floor(uv * SIZE) - 0.5;
+
+			gv += random(col.xy)*.1;
 			for (int y= -1; y <= 1; y++) {
 				for (int x= -1; x <= 1; x++) {
 
@@ -394,13 +400,13 @@ const PlainCopyShader = {
 				
 
 					// Distance to the point
-					float dist = dot(diff,neighbor);
+					float dist = pow(dot(diff,neighbor),3. +  sin(time));
 
 
-					dist += sin((.02/dist )* 100. + time * random(gvid));
+					dist += sin((.02/dist )* 3. + time);
 
 					// Keep the closer distance
-					m_dist = min(m_dist, dist);
+					m_dist = min(m_dist, dist) + b.x*.1;
 					
 				}
 			}
@@ -409,13 +415,17 @@ const PlainCopyShader = {
 
 			col = vec4(m_dist);
 
+			col.xy *= mix(col.xy,col.xy * rotate2d(col.x*5. + time),10.5 / length(vUv - 0.5)*10.);
+
+
+			col = mix(b,col,vec4((1./uncol)));
 
 
 
-
-
-			col *= 1.;
+			col *= 1.5;
 			col = pow(col,vec4(1.));
+
+			col *= smoothstep(-.2,2.,length(vUv - 0.5));
 			col = clamp(vec4(0.),vec4(1.),col);
 			
 			gl_FragColor = vec4(col);
