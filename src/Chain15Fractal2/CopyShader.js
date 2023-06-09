@@ -436,7 +436,9 @@ float fbm (in vec2 st) {
 
     float cirmod = + cos(iTime*.5)*.1;
 
-    float cir = sdBox(uv - 0.5, vec2(0.25,0.25) + fbm(uv*100. + iTime)*.01);
+    float cir = sdBox(uv - 0.5, vec2(0.15,0.15) + sin(iTime)*.05 + fbm(uv*100. + iTime)*.01);
+
+    cir /= smoothstep(-.2,.2,cir);
     
 
     
@@ -449,23 +451,26 @@ float fbm (in vec2 st) {
 
     
 
-    for (int i = 0; i < 3; i++){
+    for (int i = 0; i < 4; i++){
     
 
     // uv = mix(fract(uv*2.),fract(uv * (3.)),(sin(iTime*.2)+ 1.)*.5);
 
-      uv = fract(uv * 4.);
+
+
+      uv = fract(uv * 2. + vec2(sin(iTime*.5),cos(iTime*.5))*.15);
 
 
     circol = pal( cir + iTime*.1, vec3(.2,0.1,0.1),vec3(0.1,0.5,0.5),vec3(1.,1.,1.0),vec3(0.0,0.33,0.67) );
     
-     cir /= sin(smoothstep(-.1,.4,sdBox(uv - 0.5, vec2(0.1,0.1)))+ iTime * .5)*1.5;
+     //cir /= sin(smoothstep(-.1,.4,sdBox(uv - 0.5, vec2(0.1,0.1)))+ iTime * .5)*1.5;
+    // cir = mix(cir,min(cir,(sin(cir*1.2 + iTime*.2)+2.)*.5),1.);
 
 
-     cir = min(cir,(sin(cir*.2 + iTime*.2)+2.)*.5);
+    cir /= sin(sdBox(uv - 0.5, vec2(.2))*10. + float(i) + iTime);
   }
 
-    vec3 col = (vec3(cir) - circol);
+    vec3 col = (vec3(cir) + circol);
     
    
 
