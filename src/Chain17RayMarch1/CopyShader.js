@@ -1,71 +1,36 @@
 /**
- * Afterimage shader
- * I created this effect inspired by a demo on codepen:
- * https://codepen.io/brunoimbrizi/pen/MoRJaN?page=1&
+ * Full-screen textured quad shader
  */
+import glsl from 'glslify'
 
- import type { IUniform, Texture } from 'three'
- import type { IShader } from 'three-stdlib/shaders/types'
- import glsl from 'glslify'
- 
- export type AfterimageShaderUniforms = {
-   damp: IUniform<number>
-   tNew: IUniform<Texture | null>
-   tOld: IUniform<Texture | null>
-   d: IUniform<Texture | null>
-   time: IUniform<number>
-   framecount: IUniform<number>
-   resX: IUniform<number>
-   resY: IUniform<number>
- }
- 
- export interface IAfterimageShader extends IShader<AfterimageShaderUniforms> {}
- 
- export const AfterimageShader: IAfterimageShader = {
-   uniforms: {
-     damp: { value: 0.96 },
-     time: {value: 0},
-     tOld: { value: null },
-     tNew: { value: null },
-     d: { value: null },
-     framecount: {value: 0},
-	 resX: {value: 0},
-	 resY: {value: 0},
-     
-   },
- 
-   
-   vertexShader: glsl`
-    
-     varying vec2 vUv;
- 
-     void main() {
- 
-     vUv = uv;
-     gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
-     
+const CopyShader = {
 
-     }`
-   ,
- 
-   fragmentShader: glsl`
-    
-     uniform float damp;
-     uniform float time;
- 
-      uniform sampler2D tOld;
-     uniform sampler2D tNew;
-     uniform sampler2D d;
+	uniforms: {
 
-	 uniform float resX;
-	 uniform float resY;
+		'tDiffuse': { value: null },
+		'opacity': { value: 1.0 },
+		'uTime': { value: 0.0 },
+		'framecount': {value: 0}
 
- 
-     varying vec2 vUv;
 
-     uniform int framecount;
+	},
 
-     vec4 when_gt( vec4 x, float y ) {
+	vertexShader: /* glsl */`
+		varying vec2 vUv;
+		void main() {
+			vUv = uv;
+			gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+		}`,
+
+	fragmentShader: /* glsl */`
+		uniform float opacity;
+		uniform sampler2D tDiffuse;
+		varying vec2 vUv;
+		uniform float uTime;
+		uniform int framecount;
+
+
+		vec4 when_gt( vec4 x, float y ) {
 			return max( sign( x - y ), 0.0 );
 		  }
 		   
@@ -338,7 +303,7 @@
 					(d - b) * u.x * u.y;
 		  }
 		  
-		  #define OCTAVES 1
+		  #define OCTAVES 10
 		  float fbm (in vec2 st) {
 			// Initial values
 			float value = 0.0;
@@ -349,168 +314,124 @@
 			for (int i = 0; i < OCTAVES; i++) {
 				value += amplitude * noise(st);
 				st *= 2.;
-				amplitude *= .6;
+				amplitude *= .1;
 			}
 			return value;
 		  }
 
+/////////////////////////////////////////////////// RayMarch
 
-     
-    void GetSmoke(sampler2D buff, vec2 uv, vec2 res, out vec4 rightColor, out vec4 leftColor, out vec4 upColor, out vec4 downColor){
+#define MAX_STEPS 100
+#define MAX_DIST 100.
+#define SURF_DIST .01
 
-		float xPixel = 1.0/res.x; //The size of a single pixel 
-		float yPixel = 1.0/res.y;
+float GetDist(vec3 p, float time) {
+	vec4 s = vec4(0, 4, 6, 3.5);
+    
+    float sphereDist =  length(p-s.xyz)-s.w;
 
-		 rightColor = texture2D(buff,vec2(uv.x+xPixel,uv.y));
-		 leftColor = texture2D(buff,vec2(uv.x-xPixel,uv.y));
-		 upColor = texture2D(buff,vec2(uv.x,uv.y+yPixel));
-		 downColor = texture2D(buff,vec2(uv.x,uv.y-yPixel));
-     }
-
-
+	sphereDist = length(sphereDist + fbm(p.xz*3. + time));
 
 
-	 vec4 blur(sampler2D img, vec2 uv, vec2 res, float time ){
-		vec4 colX = vec4(0.);
-		vec4 colY = vec4(0.);
-		vec4 col = vec4(0.);		
-
-		for (int x = -10; x < 10; x++ ){
-			colX = texelFetch(img, ivec2(uv) + ivec2(x,0), 0);
-			for (int y = -10; y < 10; y++){
-
-				vec2 mods = mod(vec2(uv.x, uv.y),vec2(res.x,res.y));
-
-
-					colY += texelFetch(img, ivec2(uv) - ivec2(x,y), 0);					
-			}
-
-		}
-
-		col = colY / 300.;
-
-		return col;
-	  }
-
- 
-    void main() {
- 
-	vec4 texelNew = texelFetch( tNew, ivec2(gl_FragCoord), 0 );
-
-	vec4 texN = texture2D( tNew, vUv);
-	vec4 texO = texture2D( tOld, vUv);
-
-
-
-	int FC = framecount;
-
-    vec2 uv = vUv;
-
-    float iTime = time;
-
-    vec4 col;
-
-
-	
-	vec4 rightColor;
-	vec4 leftColor;
-	vec4 upColor;
-	vec4 downColor;
-	float facnoise;
-
-
-	GetSmoke(tOld, uv, vec2(resX,resY), rightColor, leftColor, upColor, downColor);
-
-
-
-	vec4 b = blur(tOld, uv , vec2(resX,resY),time);
-
-	vec3 changeblur = b.xyz;
-
-	if (framecount < 10){
-		col = texN;
-	}
-
-	else
-	{
-
-	// col.rgb = 
-    // 0.02 * 
-	
-	// (
-	// 	distance(changeblur,leftColor.rgb) + 
-
-	// 	distance(changeblur, rightColor.rgb) + 
-
-	// 	distance(changeblur,downColor.rgb) + 
-		
-	// 	distance(changeblur,upColor.rgb) - 
-		
-	// 	50.0 * texO.rgb
-
-	// 	// length(changeblur * leftColor.rgb) + 
-
-	// 	// length(changeblur - rightColor.rgb) + 
-
-	// 	// cross(changeblur,downColor.rgb) + 
-		
-	// 	// cross(changeblur,upColor.rgb) - 
-		
-	// 	// 51.0 * texO.rgb
-	// );
-
-	// col.rgb += 
-	
-	// 1.0 * 
-
-	// (
-	// 	(leftColor.rgb + 
-	// 	rightColor.rgb + 
-	// 	upColor.rgb + 
-	// 	downColor.rgb) * 
-	// 	vec3(.25) + 
-	// 	texO.rgb
-
-	// );
-
-	float mulfac = .3;
-	float offset = 1.8;
-	float factor = 
-    20. * 
-	(
-		(sin(leftColor.r + b.r * 3. + time) + offset) * mulfac + 
-		(sin(rightColor.r - b.r + time) + offset) * mulfac + 
-		(sin(downColor.r + b.r + time) + offset) * mulfac+ 
-		(sin(upColor.r * b.r + time) + offset) * mulfac - 
-		 texO.r
-	);
-
-	uv -= 0.5;
-
-	facnoise = fbm(uv * factor*.2 + time);
-	factor /=  facnoise*100.9;
-
-	factor /= 1.2/factor;
-
-
-
-
-
-	float minimum = .03;
-if (factor >= -minimum && factor < 0.0) factor = -minimum;
-col.r += (sin(factor));
-
-	//col.rgb = mod(col.rgb,1.);
-
-
+    float planeDist = p.y;
+    
+    float d = min(sphereDist, planeDist);
+    return d;
 }
 
-col.xy = vec2(col.r);
-col.z = facnoise;
-col.w = col.r;
+float RayMarch(vec3 ro, vec3 rd, float time) {
+	float dO=0.;
+    
+    for(int i=0; i<MAX_STEPS; i++) {
+    	vec3 p = ro + rd*dO;
+        float dS = GetDist(p, time);
+        dO += dS;
+        if(dO>MAX_DIST || dS<SURF_DIST) break;
+    }
+    
+    return dO;
+}
 
- 
-    gl_FragColor = vec4(col);
+vec3 GetNormal(vec3 p, float time) {
+	float d = GetDist(p, time);
+    vec2 e = vec2(.01, 0);
+    
+    vec3 n = d - vec3(
+        GetDist(p-e.xyy,time),
+        GetDist(p-e.yxy,time),
+        GetDist(p-e.yyx,time));
+    
+    return normalize(n);
+}
 
-     }`
- }
+float GetLight(vec3 p, float iTime) {
+    vec3 lightPos = vec3(0, 2, 6);
+    
+    vec3 l = normalize(lightPos-p);
+    vec3 n = GetNormal(p, iTime);
+    
+    float dif = clamp(dot(n, l), 0., 1.);
+    float d = RayMarch(p+n*SURF_DIST*2., l, iTime);
+    if(d<length(lightPos-p)) dif *= .1;
+    
+    return dif;
+}
+
+
+mat3 calcLookAtMatrix(vec3 origin, vec3 target, float roll) {
+	vec3 rr = vec3(sin(roll), cos(roll), 0.0);
+	vec3 ww = normalize(target - origin);
+	vec3 uu = normalize(cross(ww, rr));
+	vec3 vv = normalize(cross(uu, ww));
+  
+	return mat3(uu, vv, ww);
+  }
+  
+
+		void main() {
+
+			gl_FragColor = texture2D( tDiffuse, vUv );
+			vec2 uv = vUv - 0.5;
+			float time = uTime;
+
+			vec3 col = vec3(0);
+    
+			vec3 ro = vec3(0, 5, -40);
+
+			ro.xz *= rotate2d(time*.2);
+
+			vec3 target = vec3(0.,1.,0.);
+
+			float nosiespeed= 0.2;
+			target += cnoise2(vec2(time,-time)*nosiespeed)*.2;
+
+			float nosiespeed2= 0.2;
+			float zoomnoise = cnoise2(vec2(time,-time)*nosiespeed2)*3.;
+			float zoom = 2. + zoomnoise*.1;
+
+			mat3 L = calcLookAtMatrix(ro, target, 0.);
+
+			vec3 rd = normalize(L * vec3(uv.x, uv.y, zoom));
+		
+			float d = RayMarch(ro, rd, time);			
+			vec3 p = ro + rd * d;
+			
+			float dif = GetLight(p, time);
+			
+			col = vec3(d / 30. * dif + sin(time)*.02);
+
+			if (p.y <= 6.){
+				
+
+			}
+
+			float floorlight = mix(0.,abs(.1/sin(d*.2 + time)),10./d);
+				col += floorlight;
+			
+
+			gl_FragColor = vec4(col,1.);
+		}`
+
+};
+
+export { CopyShader };

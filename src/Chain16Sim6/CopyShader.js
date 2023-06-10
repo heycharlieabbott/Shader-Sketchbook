@@ -325,6 +325,10 @@ const CopyShader = {
 			float time = uTime;
 			vec4 n = vec4(cnoise2(uv*100.));
 
+			n = vec4(length(uv - 0.5));
+
+			//n = smoothstep(0.2,.25,n);
+
 			//   n = step(.0,n);
 			vec4 col = n;
 			gl_FragColor = col;

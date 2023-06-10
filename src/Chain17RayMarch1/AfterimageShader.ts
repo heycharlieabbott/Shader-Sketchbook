@@ -416,7 +416,6 @@
 	vec4 leftColor;
 	vec4 upColor;
 	vec4 downColor;
-	float facnoise;
 
 
 	GetSmoke(tOld, uv, vec2(resX,resY), rightColor, leftColor, upColor, downColor);
@@ -473,44 +472,33 @@
 
 	// );
 
-	float mulfac = .3;
-	float offset = 1.8;
+
 	float factor = 
-    20. * 
+    21. * 
 	(
-		(sin(leftColor.r + b.r * 3. + time) + offset) * mulfac + 
-		(sin(rightColor.r - b.r + time) + offset) * mulfac + 
-		(sin(downColor.r + b.r + time) + offset) * mulfac+ 
-		(sin(upColor.r * b.r + time) + offset) * mulfac - 
-		 texO.r
+		sin(leftColor.r + time) + 
+		sin(rightColor.r + time) + 
+		sin(downColor.r + time) + 
+		sin(upColor.r + time) - 
+		 texO.r*.01
 	);
 
-	uv -= 0.5;
-
-	facnoise = fbm(uv * factor*.2 + time);
-	factor /=  facnoise*100.9;
-
-	factor /= 1.2/factor;
+	
 
 
 
-
-
-	float minimum = .03;
-if (factor >= -minimum && factor < 0.0) factor = -minimum;
-col.r += (sin(factor));
+// 	float minimum = 10.03;
+// if (factor >= -minimum && factor < 0.0) factor = -minimum;
+col.rgb -= sin(factor);
 
 	//col.rgb = mod(col.rgb,1.);
 
 
 }
 
-col.xy = vec2(col.r);
-col.z = facnoise;
-col.w = col.r;
 
  
-    gl_FragColor = vec4(col);
+    gl_FragColor = vec4(texN);
 
      }`
  }

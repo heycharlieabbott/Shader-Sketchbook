@@ -366,8 +366,9 @@ const PlainCopyShader = {
 
 			vec2 uv = vUv;
 			vec4 col = (texture2D( tDiffuse, uv / SIZE));
-
 			vec4 uncol = (texture2D( tDiffuse, uv / SIZE));
+
+
 
 
 			vec4 b = blur(tDiffuse, uv * SIZE, vec2(resX,resY), time);
@@ -377,13 +378,16 @@ const PlainCopyShader = {
 
 
 			col *= 1.;
-			// col *= smoothstep(0.8,1.,col);
 
+	
 
-
+			col.xyz *= pal( col.x + time*.1, vec3(0.8,0.2,0.1),vec3(0.5,0.9,0.1),vec3(1.0,1.0,0.4),vec3(0.0,0.32,0.17));
 			
-			col = pow(col,vec4(.1));
-			col = clamp(vec4(0.),vec4(1.),col);
+			
+
+			//col = vec4(col.w);
+			col.xyz = pow(col.xyz,vec3(.1));
+			col.xyz = clamp(vec3(0.),vec3(1.),col.xyz);
 			
 			gl_FragColor = vec4(col);
 		

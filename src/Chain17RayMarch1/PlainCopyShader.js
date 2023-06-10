@@ -1,71 +1,37 @@
 /**
- * Afterimage shader
- * I created this effect inspired by a demo on codepen:
- * https://codepen.io/brunoimbrizi/pen/MoRJaN?page=1&
+ * Full-screen textured quad shader
  */
+import glsl from 'glslify'
 
- import type { IUniform, Texture } from 'three'
- import type { IShader } from 'three-stdlib/shaders/types'
- import glsl from 'glslify'
- 
- export type AfterimageShaderUniforms = {
-   damp: IUniform<number>
-   tNew: IUniform<Texture | null>
-   tOld: IUniform<Texture | null>
-   d: IUniform<Texture | null>
-   time: IUniform<number>
-   framecount: IUniform<number>
-   resX: IUniform<number>
-   resY: IUniform<number>
- }
- 
- export interface IAfterimageShader extends IShader<AfterimageShaderUniforms> {}
- 
- export const AfterimageShader: IAfterimageShader = {
-   uniforms: {
-     damp: { value: 0.96 },
-     time: {value: 0},
-     tOld: { value: null },
-     tNew: { value: null },
-     d: { value: null },
-     framecount: {value: 0},
-	 resX: {value: 0},
-	 resY: {value: 0},
-     
-   },
- 
-   
-   vertexShader: glsl`
-    
-     varying vec2 vUv;
- 
-     void main() {
- 
-     vUv = uv;
-     gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
-     
+const PlainCopyShader = {
 
-     }`
-   ,
- 
-   fragmentShader: glsl`
-    
-     uniform float damp;
-     uniform float time;
- 
-      uniform sampler2D tOld;
-     uniform sampler2D tNew;
-     uniform sampler2D d;
+	uniforms: {
 
-	 uniform float resX;
-	 uniform float resY;
+		'tDiffuse': { value: null },
+		'opacity': { value: 1.0 },
+		'uTime': { value: 0.0 },
+		'resX': {value : 0.0},
+		'resY': {value: 0.0}
 
- 
-     varying vec2 vUv;
 
-     uniform int framecount;
+	},
 
-     vec4 when_gt( vec4 x, float y ) {
+	vertexShader: /* glsl */`
+		varying vec2 vUv;
+		void main() {
+			vUv = uv;
+			gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+		}`,
+
+	fragmentShader: /* glsl */`
+		uniform float opacity;
+		uniform sampler2D tDiffuse;
+		varying vec2 vUv;
+		uniform float uTime;
+		uniform float resX;
+		uniform float resY;
+
+		vec4 when_gt( vec4 x, float y ) {
 			return max( sign( x - y ), 0.0 );
 		  }
 		   
@@ -338,7 +304,7 @@
 					(d - b) * u.x * u.y;
 		  }
 		  
-		  #define OCTAVES 1
+		  #define OCTAVES 10
 		  float fbm (in vec2 st) {
 			// Initial values
 			float value = 0.0;
@@ -349,168 +315,80 @@
 			for (int i = 0; i < OCTAVES; i++) {
 				value += amplitude * noise(st);
 				st *= 2.;
-				amplitude *= .6;
+				amplitude *= .1;
 			}
 			return value;
 		  }
 
 
-     
-    void GetSmoke(sampler2D buff, vec2 uv, vec2 res, out vec4 rightColor, out vec4 leftColor, out vec4 upColor, out vec4 downColor){
+		  vec4 blur(sampler2D img, vec2 uv, vec2 res, float time ){
+			vec4 colX = vec4(0.);
+			vec4 colY = vec4(0.);
+			vec4 col = vec4(0.);
+			vec4 bcol = vec4(0.);
 
-		float xPixel = 1.0/res.x; //The size of a single pixel 
-		float yPixel = 1.0/res.y;
+	
+			
+			
 
-		 rightColor = texture2D(buff,vec2(uv.x+xPixel,uv.y));
-		 leftColor = texture2D(buff,vec2(uv.x-xPixel,uv.y));
-		 upColor = texture2D(buff,vec2(uv.x,uv.y+yPixel));
-		 downColor = texture2D(buff,vec2(uv.x,uv.y-yPixel));
-     }
+			for (int x = -5; x < 5; x++ ){
+				//colX = texelFetch(img, ivec2(uv) + ivec2(x,0), 0);
+				for (int y = -5; y < 5; y++){
 
-
-
-
-	 vec4 blur(sampler2D img, vec2 uv, vec2 res, float time ){
-		vec4 colX = vec4(0.);
-		vec4 colY = vec4(0.);
-		vec4 col = vec4(0.);		
-
-		for (int x = -10; x < 10; x++ ){
-			colX = texelFetch(img, ivec2(uv) + ivec2(x,0), 0);
-			for (int y = -10; y < 10; y++){
-
-				vec2 mods = mod(vec2(uv.x, uv.y),vec2(res.x,res.y));
-
-
-					colY += texelFetch(img, ivec2(uv) - ivec2(x,y), 0);					
+					vec2 mods = mod(vec2(uv.x, uv.y),vec2(res.x,res.y));
+					bcol = texelFetch(img, ivec2(uv) - ivec2(x,y), 0);
+					bcol = texture(img, uv + vec2(float(x) / res.x, float(y) / res.y));
+					// if (bcol.x >= 0.){
+					// 	colY += bcol * smoothstep(0.1,.7,length(uv -0.5));
+					// }
+					colY += bcol;
+											
+				}
+				
 			}
 
+			col = colY / 32.;
+
+			return col;
+		  }
+	
+
+		  vec2 random2( vec2 p ) {
+			return fract(sin(vec2(dot(p,vec2(127.1,311.7)),dot(p,vec2(269.5,183.3))))*43758.5453);
 		}
 
-		col = colY / 300.;
-
-		return col;
-	  }
-
- 
-    void main() {
- 
-	vec4 texelNew = texelFetch( tNew, ivec2(gl_FragCoord), 0 );
-
-	vec4 texN = texture2D( tNew, vUv);
-	vec4 texO = texture2D( tOld, vUv);
 
 
+		void main() {
+			float time = uTime;
 
-	int FC = framecount;
+			float SIZE = 1.;
 
-    vec2 uv = vUv;
+			vec2 uv = vUv;
+			vec4 col = (texture2D( tDiffuse, uv / SIZE));
 
-    float iTime = time;
-
-    vec4 col;
-
-
-	
-	vec4 rightColor;
-	vec4 leftColor;
-	vec4 upColor;
-	vec4 downColor;
-	float facnoise;
+			vec4 uncol = (texture2D( tDiffuse, uv / SIZE));
 
 
-	GetSmoke(tOld, uv, vec2(resX,resY), rightColor, leftColor, upColor, downColor);
+			vec4 b = blur(tDiffuse, uv * SIZE, vec2(resX,resY), time);
+
+			vec2 gv = fract(uv * SIZE) - 0.5;
+			vec2 gvid = floor(uv * SIZE) - 0.5;
 
 
+			col *= 1.;
+			// col *= smoothstep(0.8,1.,col);
 
-	vec4 b = blur(tOld, uv , vec2(resX,resY),time);
 
-	vec3 changeblur = b.xyz;
-
-	if (framecount < 10){
-		col = texN;
-	}
-
-	else
-	{
-
-	// col.rgb = 
-    // 0.02 * 
-	
-	// (
-	// 	distance(changeblur,leftColor.rgb) + 
-
-	// 	distance(changeblur, rightColor.rgb) + 
-
-	// 	distance(changeblur,downColor.rgb) + 
+			col += b*.3;
+			
+			col = pow(col,vec4(1.));
+			col = clamp(vec4(0.),vec4(1.),col);
+			
+			gl_FragColor = vec4(col);
 		
-	// 	distance(changeblur,upColor.rgb) - 
-		
-	// 	50.0 * texO.rgb
+		}`
 
-	// 	// length(changeblur * leftColor.rgb) + 
+};
 
-	// 	// length(changeblur - rightColor.rgb) + 
-
-	// 	// cross(changeblur,downColor.rgb) + 
-		
-	// 	// cross(changeblur,upColor.rgb) - 
-		
-	// 	// 51.0 * texO.rgb
-	// );
-
-	// col.rgb += 
-	
-	// 1.0 * 
-
-	// (
-	// 	(leftColor.rgb + 
-	// 	rightColor.rgb + 
-	// 	upColor.rgb + 
-	// 	downColor.rgb) * 
-	// 	vec3(.25) + 
-	// 	texO.rgb
-
-	// );
-
-	float mulfac = .3;
-	float offset = 1.8;
-	float factor = 
-    20. * 
-	(
-		(sin(leftColor.r + b.r * 3. + time) + offset) * mulfac + 
-		(sin(rightColor.r - b.r + time) + offset) * mulfac + 
-		(sin(downColor.r + b.r + time) + offset) * mulfac+ 
-		(sin(upColor.r * b.r + time) + offset) * mulfac - 
-		 texO.r
-	);
-
-	uv -= 0.5;
-
-	facnoise = fbm(uv * factor*.2 + time);
-	factor /=  facnoise*100.9;
-
-	factor /= 1.2/factor;
-
-
-
-
-
-	float minimum = .03;
-if (factor >= -minimum && factor < 0.0) factor = -minimum;
-col.r += (sin(factor));
-
-	//col.rgb = mod(col.rgb,1.);
-
-
-}
-
-col.xy = vec2(col.r);
-col.z = facnoise;
-col.w = col.r;
-
- 
-    gl_FragColor = vec4(col);
-
-     }`
- }
+export { PlainCopyShader };
