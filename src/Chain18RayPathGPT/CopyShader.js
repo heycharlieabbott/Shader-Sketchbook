@@ -148,9 +148,9 @@ vec3 pathTrace(vec3 origin, vec3 direction, vec2 uv, float time)
             // Terminate path tracing based on probability
             float terminateProbability = .9;
             if (random(vec2(position.xz)) < terminateProbability) {
-				for (int bounce = 0; bounce < 500; bounce++){
+				for (int bounce = 0; bounce < 20; bounce++){
 					vec3 reflectionDirection = normalize(reflect(direction , normal * random(position.xy * rotate2d(float(bounce))) ));
-				     accumulatedColor += sceneDistance(position + EPSILON * reflectionDirection);
+				     accumulatedColor += attenuation * sceneDistance(position + EPSILON * reflectionDirection);
 				}
                 break;
             }
@@ -166,8 +166,8 @@ vec3 pathTrace(vec3 origin, vec3 direction, vec2 uv, float time)
         }
         
         // Update ray origin and attenuation for the next bounce
-        origin = position;
-        attenuation *= 100.1; // Attenuation factor
+        //origin = position;
+        attenuation *= 1.1; // Attenuation factor
     }
     
     return accumulatedColor;
@@ -180,13 +180,12 @@ vec3 pathTrace(vec3 origin, vec3 direction, vec2 uv, float time)
 
 		void main() {
 
-			// vec2 uv = (vUv-0.5) * vec2(resX,resY);
 			vec2 uv = vUv - 0.5;
 
 			//vec2 uv = (gl_FragCoord.xy - 0.5 * vec2(resX,resY)) / min(resX,resY);
 			float time = uTime;
 			
-			vec3 rayOrigin = vec3(sin(time), cos(time)+2., -3.);
+			vec3 rayOrigin = vec3(sin(time), cos(time)+2., -5.);
 
 			vec3 target = vec3(0.,0.,0.);
 
