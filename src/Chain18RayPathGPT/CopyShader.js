@@ -65,12 +65,17 @@ const CopyShader = {
 		// 	return vec2(dO,dS.y);
 		// }
 
+		mat2 rotate2d(float _angle){
+			return mat2(cos(_angle),-sin(_angle),
+						sin(_angle),cos(_angle));
+		}
+
 
 
 
 /////////////////////// GPT STUFF
-const int MAX_ITERATIONS = 100;
-const float EPSILON = 0.001;
+const int MAX_ITERATIONS = 200;
+const float EPSILON = 0.000001;
 const float MAX_DISTANCE = 100.0;
 
 // Distance function for the scene
@@ -78,7 +83,7 @@ float sceneDistance(vec3 p)
 {
     // Define your scene geometry here
     // For example, a sphere of radius 1 centered at the origin:
-	vec3 s1c = vec3(0.011,.1,0.01);
+	vec3 s1c = vec3(0.011,1.,0.01);
 	float s1 = length(p - s1c) - 1.;
 
 	vec3 s2c = vec3(1,.5,0.);
@@ -141,12 +146,12 @@ vec3 pathTrace(vec3 origin, vec3 direction, vec2 uv, float time)
             accumulatedColor += attenuation * diffuse * color * lightColor * lightIntensity;
 
             // Terminate path tracing based on probability
-            float terminateProbability = .1;
+            float terminateProbability = .9;
             if (random(vec2(position.xz)) < terminateProbability) {
-				// for (int bounce = 0; bounce < 3; bounce++){
-				// 	vec3 reflectionDirection = normalize(reflect(direction, normal));
-				//      accumulatedColor += attenuation * pathTrace(position + EPSILON * reflectionDirection, reflectionDirection, uv, time);
-				// }
+				for (int bounce = 0; bounce < 500; bounce++){
+					vec3 reflectionDirection = normalize(reflect(direction , normal * random(position.xy * rotate2d(float(bounce))) ));
+				     accumulatedColor += sceneDistance(position + EPSILON * reflectionDirection);
+				}
                 break;
             }
 
@@ -162,7 +167,7 @@ vec3 pathTrace(vec3 origin, vec3 direction, vec2 uv, float time)
         
         // Update ray origin and attenuation for the next bounce
         origin = position;
-        attenuation *= 10.1; // Attenuation factor
+        attenuation *= 100.1; // Attenuation factor
     }
     
     return accumulatedColor;
@@ -181,13 +186,13 @@ vec3 pathTrace(vec3 origin, vec3 direction, vec2 uv, float time)
 			//vec2 uv = (gl_FragCoord.xy - 0.5 * vec2(resX,resY)) / min(resX,resY);
 			float time = uTime;
 			
-			vec3 rayOrigin = vec3(sin(time), cos(time)+2., -1.);
+			vec3 rayOrigin = vec3(sin(time), cos(time)+2., -3.);
 
 			vec3 target = vec3(0.,0.,0.);
 
 			 mat3 L = calcLookAtMatrix(rayOrigin, target, 0.);
 
-			vec3 rayDirection = normalize(L * vec3(uv, .2));
+			vec3 rayDirection = normalize(L * vec3(uv, 1.));
 			
 			vec3 color = pathTrace(rayOrigin, rayDirection, uv, time);
 			gl_FragColor = vec4(color, 1.0);
