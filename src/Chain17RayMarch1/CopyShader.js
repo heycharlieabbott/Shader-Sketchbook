@@ -319,60 +319,94 @@ const CopyShader = {
 			return value;
 		  }
 
+		  float smin( float a, float b, float k )
+{
+    float res = exp2( -k*a ) + exp2( -k*b );
+    return -log2( res )/k;
+}
+
 /////////////////////////////////////////////////// RayMarch
 
 #define MAX_STEPS 100
-#define MAX_DIST 100.
+#define MAX_DIST 200.
 #define SURF_DIST .01
 
-float GetDist(vec3 p, float time) {
-	vec4 s = vec4(0, 4, 6, 3.5);
+vec2 GetDist(vec3 p, float time) {
+	vec4 s = vec4(0, 4. + sin(time)*2., 6, 3. + sin(time)*.5);
     
     float sphereDist =  length(p-s.xyz)-s.w;
 
-	sphereDist = length(sphereDist + fbm(p.xz*3. + time));
+	//float spN = smoothstep(0.25,.65,fbm(p.xz*2.));
+	float spN = smoothstep(0.25,.85,snoise3(p*.4));
+
+	
+	sphereDist = length(sphereDist + spN);
+
+	float sphereDist2 =  length(p-s.xyz - 3.)-6.;
+
+	float spN2 = smoothstep(0.35,.45,fbm(p.xz*1.));
+	
+	// sphereDist2 = length(sphereDist2 + spN2);
 
 
-    float planeDist = p.y;
+	vec2 nc = smoothstep(vec2(100.),vec2(0.),abs(p.xz)) * p.xz;
+	float pN = fbm(nc*(sin(time*.25)*.8));
+	//pN *= smoothstep(1.,0.,abs(p.z*.03));
+
+    float planeDist = length(p.y + pN * 5.);
+
+
+    float x = smin(sphereDist, planeDist,.2);
     
-    float d = min(sphereDist, planeDist);
-    return d;
+    float d = smin(sphereDist, planeDist,1. + sin(time)*.2);
+
+	float m;
+	if (x <= planeDist - 4.5 && x <= sphereDist && d < 1.58/MAX_DIST){
+		m = 1.;
+	}
+
+	else if (d == planeDist){
+		m = 0.;
+	}
+
+    return vec2(d,m);
 }
 
-float RayMarch(vec3 ro, vec3 rd, float time) {
+vec2 RayMarch(vec3 ro, vec3 rd, float time) {
 	float dO=0.;
+	vec2 dS;
     
     for(int i=0; i<MAX_STEPS; i++) {
     	vec3 p = ro + rd*dO;
-        float dS = GetDist(p, time);
-        dO += dS;
-        if(dO>MAX_DIST || dS<SURF_DIST) break;
+         dS = GetDist(p, time);
+        dO += dS.x;
+        if(dO>MAX_DIST || dS.x<SURF_DIST) break;
     }
     
-    return dO;
+    return vec2(dO,dS.y);
 }
 
 vec3 GetNormal(vec3 p, float time) {
-	float d = GetDist(p, time);
+	float d = GetDist(p, time).x;
     vec2 e = vec2(.01, 0);
     
     vec3 n = d - vec3(
-        GetDist(p-e.xyy,time),
-        GetDist(p-e.yxy,time),
-        GetDist(p-e.yyx,time));
+        GetDist(p-e.xyy,time).x,
+        GetDist(p-e.yxy,time).x,
+        GetDist(p-e.yyx,time).x);
     
     return normalize(n);
 }
 
-float GetLight(vec3 p, float iTime) {
-    vec3 lightPos = vec3(0, 2, 6);
+float GetLight(vec3 p, float iTime, out vec3 n) {
+    vec3 lightPos = vec3(0, 4, 6);
     
     vec3 l = normalize(lightPos-p);
-    vec3 n = GetNormal(p, iTime);
+     n = GetNormal(p, iTime);
     
     float dif = clamp(dot(n, l), 0., 1.);
-    float d = RayMarch(p+n*SURF_DIST*2., l, iTime);
-    if(d<length(lightPos-p)) dif *= .1;
+    float d = RayMarch(p+n*SURF_DIST*2., l, iTime).x;
+    if(d<length(lightPos-p)) dif *= 3.9;
     
     return dif;
 }
@@ -413,23 +447,42 @@ mat3 calcLookAtMatrix(vec3 origin, vec3 target, float roll) {
 
 			vec3 rd = normalize(L * vec3(uv.x, uv.y, zoom));
 		
-			float d = RayMarch(ro, rd, time);			
+			vec2 Scene = RayMarch(ro, rd, time);
+			float d = Scene.x;
+			float m = Scene.y;
 			vec3 p = ro + rd * d;
-			
-			float dif = GetLight(p, time);
+			vec3 N;
+			float dif = GetLight(p, time, N);
 			
 			col = vec3(d / 30. * dif + sin(time)*.02);
 
-			if (p.y <= 6.){
-				
+				float floorlight = mix(0.,abs(.1/sin(d*.2 + time)),20./d);
 
-			}
+				floorlight *= smoothstep(.2,0.,p.y);
+				//col += floorlight;
 
-			float floorlight = mix(0.,abs(.1/sin(d*.2 + time)),10./d);
-				col += floorlight;
-			
+				col *= 50./pow(d,1.3);
+				col -= sin(N * p.y * 2. + time)*.7;
+				col *= smoothstep(1.,0.,p.y*.1);
+
+				if (m == 1.){
+					col -= vec3(sin(pow(p.y,1.1) * 30. + time))*1.5 + sin(time)*.1;
+					col += snoise3(p*1.1 + time)*.5 * mix(1.,4.,p.y*.1);
+				}
+
+				//col += mix(vec3(0.),sin(p * snoise3(p/100. + fbm(p.xz*.1 + time))),1./p.y*.1);
+
+			col.xyz = clamp(vec3(0.),vec3(1.),col);
+			//col.xyz = pow(col.xyz,vec3(3.));
+
+			//gl_FragColor = vec4(col,pow(1./d,1.));
+
+
+
+
 
 			gl_FragColor = vec4(col,1.);
+
 		}`
 
 };

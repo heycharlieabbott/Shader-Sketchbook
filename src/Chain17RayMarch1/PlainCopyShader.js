@@ -331,9 +331,9 @@ const PlainCopyShader = {
 			
 			
 
-			for (int x = -5; x < 5; x++ ){
+			for (int x = -10; x < 10; x++ ){
 				//colX = texelFetch(img, ivec2(uv) + ivec2(x,0), 0);
-				for (int y = -5; y < 5; y++){
+				for (int y = -1; y < 1; y++){
 
 					vec2 mods = mod(vec2(uv.x, uv.y),vec2(res.x,res.y));
 					bcol = texelFetch(img, ivec2(uv) - ivec2(x,y), 0);
@@ -347,7 +347,7 @@ const PlainCopyShader = {
 				
 			}
 
-			col = colY / 32.;
+			col = colY / 20.;
 
 			return col;
 		  }
@@ -356,6 +356,10 @@ const PlainCopyShader = {
 		  vec2 random2( vec2 p ) {
 			return fract(sin(vec2(dot(p,vec2(127.1,311.7)),dot(p,vec2(269.5,183.3))))*43758.5453);
 		}
+
+
+
+		
 
 
 
@@ -380,10 +384,13 @@ const PlainCopyShader = {
 			// col *= smoothstep(0.8,1.,col);
 
 
-			col += b*.3;
+			//col.xyz = mix(col.xyz,b.xyz,vec3(col.w));
 			
-			col = pow(col,vec4(1.));
 			col = clamp(vec4(0.),vec4(1.),col);
+			col = pow(col,vec4(1.12));
+			
+
+			//col = b;
 			
 			gl_FragColor = vec4(col);
 		

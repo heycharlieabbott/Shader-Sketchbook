@@ -33,7 +33,7 @@ function App() {
     <>
      <Canvas gl={{ preserveDrawingBuffer: true }}>
       <EffectChain/>
-      <Recorder cap={captureStarted} endTime={35} screenshot={screenShot}/>
+      <Recorder cap={captureStarted} endTime={70} screenshot={screenShot}/>
     </Canvas>
     </>
   )
