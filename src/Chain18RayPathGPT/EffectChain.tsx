@@ -25,6 +25,9 @@ const EffectChain = () =>{
     shref.current.uniforms.resX.value = size.width;
     shref.current.uniforms.resY.value = size.height;
 
+    ccref.current.uniforms.resX.value = size.width;
+    ccref.current.uniforms.resY.value = size.height;
+
   });
 
   

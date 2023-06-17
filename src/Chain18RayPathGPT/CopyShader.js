@@ -369,8 +369,8 @@ const CopyShader = {
 
 
 /////////////////////// GPT STUFF
-const int MAX_ITERATIONS = 100;
-const float EPSILON = 0.001;
+const int MAX_ITERATIONS = 25;
+const float EPSILON = 0.0001;
 const float MAX_DISTANCE = 30.0;
 
 // Distance function for the scene
@@ -398,12 +398,14 @@ vec2 sceneDistance(vec3 p, float time)
 	float g = length(p.y + fbm(p.xz * 1.)*3. + (fbm(p.xz * 2. + 1.)*.2));
 
 
-	if (s1 < g){
+	float x = smin(s1,g,.02);
+
+	if (x <= s1 && x <=g){
 		m = 1.;
 
 	}
 
-	if (g < MAX_DISTANCE){
+	if (g < s1){
 		m = 0.;
 	}
 
@@ -448,6 +450,14 @@ vec3 pathTrace(vec3 origin, vec3 direction, vec2 uv, float time)
         
         if (d <= EPSILON) {
             // Object hit, perform lighting calculation here
+
+			if (m <= 1.){
+				accumulatedColor = vec3(sin(direction*100. * pow(position.y,1.)));
+				accumulatedColor += fbm(position.xz*.7 / d*.01) - d*.01;
+				accumulatedColor = smoothstep(vec3(.7),vec3(1.),accumulatedColor);
+			}
+
+
             normal = estimateNormal(position, time);
             vec3 lightPosition = vec3(10.0, 10.0, sin(time)*3.);
             vec3 lightDirection = normalize(lightPosition - position);
@@ -459,30 +469,38 @@ vec3 pathTrace(vec3 origin, vec3 direction, vec2 uv, float time)
             vec3 color = vec3(sin(position + normal) + snoise3(normal + position.y*1.)) * position.y + sin(time)*.2; // Object color
             vec3 lightColor = vec3(10.0); // Light color
 
-            accumulatedColor += attenuation * diffuse * color * lightColor * lightIntensity;
 
-            // Terminate path tracing based on probability
+
+			// Terminate path tracing based on probability
             float terminateProbability = 1.;
-            if (random(vec2(uv)) < terminateProbability) {
-				for (int bounce = 0; bounce < 1; bounce++){
+            if (random(vec2(position.xy)) < terminateProbability) {
+				for (int bounce = 0; bounce < 10; bounce++){
 					vec3 reflectionDirection = normalize(reflect(direction , normal));
-				     accumulatedColor += (1./(float(bounce)+1.)) * sceneDistance(position + EPSILON * reflectionDirection,time).x;
+				     //accumulatedColor += (1./(float(bounce)+1.)) * sceneDistance(position + EPSILON * reflectionDirection,time).x;
+					 accumulatedColor += sceneDistance(origin + reflectionDirection * dO,time).x * .003;
+					 float fre = clamp(0.,1.,dot(direction,reflectionDirection));
+					 fre = smoothstep(0.7,.9,fre);
+					accumulatedColor += fre*.6 - (reflectionDirection*.12);
 				}
                 break;
             }
+
+            //accumulatedColor = attenuation * diffuse * color * lightColor * lightIntensity;
+
+            
+
+
 
 
         }
 
 
-		if (m == 1.){
-			accumulatedColor = vec3(0.2);
-		}
+	
 
         
         // Update ray origin and attenuation for the next bounce
         //origin = position;
-        attenuation *= 1.  * smoothstep(0.,1.,1./pow(d,.2)); // Attenuation factor
+        //attenuation *= 1.  * smoothstep(0.,1.,1./pow(d,1.)); // Attenuation factor
     }
     
     return accumulatedColor;
@@ -502,6 +520,8 @@ vec3 pathTrace(vec3 origin, vec3 direction, vec2 uv, float time)
 			
 			vec3 rayOrigin = vec3(0., 2., -10.);
 			rayOrigin.xz *= rotate2d(time*.1);
+			rayOrigin.y += sin(time*.5);
+			rayOrigin.y += cnoise2(vec2(time*.5,-time*.2))*.2;
 
 			vec3 target = vec3(0.,0.,0.);
 
