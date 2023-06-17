@@ -455,6 +455,7 @@ vec3 pathTrace(vec3 origin, vec3 direction, vec2 uv, float time)
 				accumulatedColor = vec3(sin(direction*100. * pow(position.y,1.)));
 				accumulatedColor += fbm(position.xz*.7 / d*.01) - d*.01;
 				accumulatedColor = smoothstep(vec3(.7),vec3(1.),accumulatedColor);
+				accumulatedColor *= 1.1;
 			}
 
 
@@ -479,7 +480,7 @@ vec3 pathTrace(vec3 origin, vec3 direction, vec2 uv, float time)
 				     //accumulatedColor += (1./(float(bounce)+1.)) * sceneDistance(position + EPSILON * reflectionDirection,time).x;
 					 accumulatedColor += sceneDistance(origin + reflectionDirection * dO,time).x * .003;
 					 float fre = clamp(0.,1.,dot(direction,reflectionDirection));
-					 fre = smoothstep(0.7,.9,fre);
+					 fre = smoothstep(0.7 + sin(time)*.2,.9,fre);
 					accumulatedColor += fre*.6 - (reflectionDirection*.12);
 				}
                 break;
@@ -487,7 +488,9 @@ vec3 pathTrace(vec3 origin, vec3 direction, vec2 uv, float time)
 
             //accumulatedColor = attenuation * diffuse * color * lightColor * lightIntensity;
 
-            
+        
+		
+			
 
 
 
@@ -495,7 +498,21 @@ vec3 pathTrace(vec3 origin, vec3 direction, vec2 uv, float time)
         }
 
 
-	
+		// if (position.y >= .92){
+		// 	direction.xz *= rotate2d(time*.02 + sin(time)*.02);
+		// 	float manip = cnoise2(direction.xy*1.)*(sin(time)+1.)*.5 * 0.;
+		// 	accumulatedColor += smoothstep(0.,1.,pow(sin((direction.y + manip)*1000.)*.13,1.));
+
+		// }
+
+
+		if (position.y >= 1.5){
+			float manip = cnoise2(direction.xy*1.)*(sin(time)+1.)*.5 * 0.;
+			// manip = sin(direction.z*2.)*.5;
+			accumulatedColor += smoothstep(0.,1.,pow(sin((direction.y + manip)*1000.)*.11,1.));
+
+		}
+
 
         
         // Update ray origin and attenuation for the next bounce

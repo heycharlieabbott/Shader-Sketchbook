@@ -386,7 +386,7 @@ const PlainCopyShader = {
 			// col *= smoothstep(0.8,1.,col);
 
 
-			col.xyz = mix(col.xyz,b.xyz,pow(length(uv- 0.5),4.));
+			col.xyz = mix(col.xyz,b.xyz,pow(length(uv- 0.5),3.));
 			
 			col = clamp(vec4(0.),vec4(1.),col);
 			col = pow(col,vec4(1.12));
