@@ -3,15 +3,16 @@
  */
 import glsl from 'glslify'
 
-const CopyShader = {
+const PlainCopyShader = {
 
 	uniforms: {
 
 		'tDiffuse': { value: null },
 		'opacity': { value: 1.0 },
 		'uTime': { value: 0.0 },
-		'resX': {value: 0.0},
-		'resY': {value: 0.0}
+		'resX':{value: 0.0},
+		'resY':{value: 0.0},
+
 
 
 	},
@@ -31,46 +32,8 @@ const CopyShader = {
 		uniform float resX;
 		uniform float resY;
 
-		// float random(vec2 co)
-		// {
-		// 	highp float a = 12.9898;
-		// 	highp float b = 78.233;
-		// 	highp float c = 43758.5453;
-		// 	highp float dt= dot(co.xy ,vec2(a,b));
-		// 	highp float sn= mod(dt,3.14);
-		// 	return fract(sin(sn) * c);
-		// }
-
-		mat3 calcLookAtMatrix(vec3 origin, vec3 target, float roll) {
-			vec3 rr = vec3(sin(roll), cos(roll), 0.0);
-			vec3 ww = normalize(target - origin);
-			vec3 uu = normalize(cross(ww, rr));
-			vec3 vv = normalize(cross(uu, ww));
-		  
-			return mat3(uu, vv, ww);
-		  }
 
 
-		// //   vec2 RayMarch(vec3 ro, vec3 rd, float time) {
-		// // 	float dO=0.;
-		// // 	vec2 dS;
-			
-		// // 	for(int i=0; i<MAX_STEPS; i++) {
-		// // 		vec3 p = ro + rd*dO;
-		// // 		dS = GetDist(p, time);
-		// // 		dO += dS.x;
-		// // 		if(dO>MAX_DIST || dS.x<SURF_DIST) break;
-		// // 	}
-			
-		// // 	return vec2(dO,dS.y);
-		// // }
-
-		// mat2 rotate2d(float _angle){
-		// 	return mat2(cos(_angle),-sin(_angle),
-		// 				sin(_angle),cos(_angle));
-		// }
-
-		
 		vec4 when_gt( vec4 x, float y ) {
 			return max( sign( x - y ), 0.0 );
 		  }
@@ -360,200 +323,78 @@ const CopyShader = {
 			return value;
 		  }
 
-		  float smin( float a, float b, float k )
-{
-    float res = exp2( -k*a ) + exp2( -k*b );
-    return -log2( res )/k;
-}
 
-
-
-/////////////////////// GPT STUFF
-const int MAX_ITERATIONS = 25;
-const float EPSILON = 0.0001;
-const float MAX_DISTANCE = 30.0;
-
-// Distance function for the scene
-vec2 sceneDistance(vec3 p, float time)
-{
-
-	float m = 0.;
-    // Define your scene geometry here
-    // For example, a sphere of radius 1 centered at the origin:
-	vec3 sC = vec3(p.x,mod(p.y - time,4.)/1.,p.z);
-
+		  vec4 blur(sampler2D img, vec2 uv, vec2 res, float time ){
+			vec4 colX = vec4(0.);
+			vec4 colY = vec4(0.);
+			vec4 col = vec4(0.);
+			vec4 bcol = vec4(0.);
 
 	
-
-	sC += sin(((sC.x * sC.z + sC.y) + time)*8.)*.05;
-
-	p.y < -2. ? sC.y = 0. : sC.y = sC.y;
-
-	vec3 s1c = vec3(0.0,2.,0.);
-	float s1 = length(sC - s1c) - .3;
-
-	vec3 s2c = vec3(1,.5,0.);
-	float s2 = length(p - s2c) - .4;
-
-	float g = length(p.y + fbm(p.xz * 1.)*3. + (fbm(p.xz * 2. + 1.)*.2));
-
-
-	float x = smin(s1,g,.2);
-
-	if (x <= s1 && x <=g){
-		m = 1.;
-
-	}
-
-	if (g < s1){
-		m = 0.;
-	}
-
-    return vec2(min(smin(s1,g,1.2),s1),m);
-}
-
-// Normal estimation using finite differences
-vec3 estimateNormal(vec3 position, float time)
-{
-    const vec3 offset = vec3(0.001, 0.0, 0.0);
-    float x = sceneDistance(position + offset.xyy, time).x;
-    float y = sceneDistance(position + offset.yxy, time).x;
-    float z = sceneDistance(position + offset.yyx, time).x;
-    return normalize(vec3(x, y, z) - sceneDistance(position, time).x);
-}
-
-// Path tracing for lighting and colors
-vec3 pathTrace(vec3 origin, vec3 direction, vec2 uv, float time)
-{
-    vec3 accumulatedColor = vec3(0.0);
-    vec3 attenuation = vec3(10.);
-	vec3 normal;
-
-	//additions
-	float dO=0.;
-	vec2 dS;
-	
-
-    for (int i = 0; i < MAX_ITERATIONS; i++) {
-       
-		
-		vec3 position = origin + direction * dO;
-		
-		vec2 scene = sceneDistance(position, time);
-        float d = scene.x;
-		float m = scene.y;
-
-		
-		dO += d;
-
- 		if(dO>MAX_DISTANCE) break;
-        
-        if (d <= EPSILON) {
-            // Object hit, perform lighting calculation here
-
-			if (m <= 1.){
-				accumulatedColor = vec3(sin(direction*100. * pow(position.y,1.)));
-				accumulatedColor += fbm(position.xz*.7 / d*.01) - d*.01;
-				accumulatedColor = smoothstep(vec3(.7),vec3(1.),accumulatedColor);
-				accumulatedColor *= 1.1;
-			}
-
-
-            normal = estimateNormal(position, time);
-            vec3 lightPosition = vec3(10.0, 10.0, sin(time)*3.);
-            vec3 lightDirection = normalize(lightPosition - position);
-            float lightDistance = length(lightPosition - position);
-
-            // Simplified Lambertian lighting
-            float diffuse = max(0.0, dot(normal, lightDirection));
-            vec3 lightIntensity = vec3(1.0) / (lightDistance * lightDistance);
-            vec3 color = vec3(sin(position + normal) + snoise3(normal + position.y*1.)) * position.y + sin(time)*.2; // Object color
-            vec3 lightColor = vec3(10.0); // Light color
-
-
-
-			// Terminate path tracing based on probability
-            float terminateProbability = 1.;
-            if (random(vec2(position.xy)) < terminateProbability) {
-				for (int bounce = 0; bounce < 10; bounce++){
-					vec3 reflectionDirection = normalize(reflect(direction , normal));
-				     //accumulatedColor += (1./(float(bounce)+1.)) * sceneDistance(position + EPSILON * reflectionDirection,time).x;
-					 accumulatedColor += sceneDistance(origin + reflectionDirection * dO,time).x * .003;
-					 float fre = clamp(0.,1.,dot(direction,reflectionDirection));
-					 fre = smoothstep(0.7 + sin(time)*.2,.9,fre);
-					accumulatedColor += fre*.6 - (reflectionDirection*.12);
-				}
-                break;
-            }
-
-            accumulatedColor = attenuation * diffuse * color * lightColor * lightIntensity;
-
-			// accumulatedColor = color;
+			
 			
 
+			for (int x = -20; x < 20; x++ ){
+				//colX = texelFetch(img, ivec2(uv) + ivec2(x,0), 0);
+				for (int y = -5; y < 5; y++){
 
+					vec2 mods = mod(vec2(uv.x, uv.y),vec2(res.x,res.y));
+					bcol = texelFetch(img, ivec2(uv) - ivec2(x,y), 0);
+					bcol = texture(img, uv + vec2(float(x) / res.x, float(y) / res.y));
+					// if (bcol.x >= 0.){
+					// 	colY += bcol * smoothstep(0.1,.7,length(uv -0.5));
+					// }
+					colY += bcol;
+											
+				}
+				
+			}
 
+			col = colY / 20.;
 
-        }
+			return col;
+		  }
+	
 
-
-		// if (position.y >= .92){
-		// 	direction.xz *= rotate2d(time*.02 + sin(time)*.02);
-		// 	float manip = cnoise2(direction.xy*1.)*(sin(time)+1.)*.5 * 0.;
-		// 	accumulatedColor += smoothstep(0.,1.,pow(sin((direction.y + manip)*1000.)*.13,1.));
-
-		// }
-
-
-		if (position.y >= 1.5){
-			float manip = cnoise2(direction.xy*1.)*(sin(time)+1.)*.5 * 0.;
-			// manip = sin(direction.z*2.)*.5;
-			accumulatedColor += smoothstep(0.,1.,pow(sin((direction.y + manip)*1000.)*.11,1.));
-
+		  vec2 random2( vec2 p ) {
+			return fract(sin(vec2(dot(p,vec2(127.1,311.7)),dot(p,vec2(269.5,183.3))))*43758.5453);
 		}
 
 
-        
-        // Update ray origin and attenuation for the next bounce
-        //origin = position;
-        //attenuation *= 1.  * smoothstep(0.,1.,1./pow(d,1.)); // Attenuation factor
-    }
-    
-    return accumulatedColor;
-}
-
-
-
-
+		
 
 
 		void main() {
 
-			vec2 uv = vUv - 0.5;
-
-			//vec2 uv = (gl_FragCoord.xy - 0.5 * vec2(resX,resY)) / min(resX,resY);
 			float time = uTime;
+
+			float SIZE = 1.;
+
+			vec2 uv = vUv;
+			vec4 col = (texture2D( tDiffuse, uv / SIZE));
+
+			vec4 uncol = (texture2D( tDiffuse, uv / SIZE));
+
+
+			vec4 b = blur(tDiffuse, uv * SIZE, vec2(resX,resY), time);
+
+			vec2 gv = fract(uv * SIZE) - 0.5;
+			vec2 gvid = floor(uv * SIZE) - 0.5;
+
+
+			col *= 1.;
+
+
+			// col.xyz = mix(col.xyz,b.xyz,pow(length(uv- 0.5),5.));
 			
-			vec3 rayOrigin = vec3(0., 2., -10.);
-			rayOrigin.xz *= rotate2d(time*.1);
-			rayOrigin.y += sin(time*.5);
-			rayOrigin.y += cnoise2(vec2(time*.5,-time*.2))*.2;
+			col = clamp(vec4(0.),vec4(1.),col);
+			col = pow(col,vec4(1.));
 
-			vec3 target = vec3(0.,0.,0.);
-
-			 mat3 L = calcLookAtMatrix(rayOrigin, target, 0.);
-
-			vec3 rayDirection = normalize(L * vec3(uv, 1.));
+			//col = b;
 			
-			vec3 color = pathTrace(rayOrigin, rayDirection, uv, time);
-
-			//color = pow(color,vec3(.3));
-
-
-			gl_FragColor = vec4(color, 1.0);
-			
+			gl_FragColor = vec4(col);
 		}`
 
 };
 
-export { CopyShader };
+export { PlainCopyShader };

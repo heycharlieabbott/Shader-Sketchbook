@@ -380,16 +380,16 @@ vec2 sceneDistance(vec3 p, float time)
 	float m = 0.;
     // Define your scene geometry here
     // For example, a sphere of radius 1 centered at the origin:
-	vec3 sC = vec3(p.x,mod(p.y - time,4.)/1.,p.z);
+	vec3 sC = vec3(p.x,mod(p.y,4.)/1.,p.z);
 
 
 	
 
-	sC += sin(((sC.x * sC.z + sC.y) + time)*8.)*.05;
+	sC += sin(((sC.x * sC.z + sC.y))*8.)*.05;
 
 	p.y < -2. ? sC.y = 0. : sC.y = sC.y;
 
-	vec3 s1c = vec3(0.0,2.,0.);
+	vec3 s1c = vec3(0.0,0.,0.);
 	float s1 = length(sC - s1c) - .3;
 
 	vec3 s2c = vec3(1,.5,0.);
@@ -409,7 +409,7 @@ vec2 sceneDistance(vec3 p, float time)
 		m = 0.;
 	}
 
-    return vec2(min(smin(s1,g,1.2),s1),m);
+    return vec2(min(smin(g,g,1.2),g),m);
 }
 
 // Normal estimation using finite differences
@@ -455,7 +455,7 @@ vec3 pathTrace(vec3 origin, vec3 direction, vec2 uv, float time)
 				accumulatedColor = vec3(sin(direction*100. * pow(position.y,1.)));
 				accumulatedColor += fbm(position.xz*.7 / d*.01) - d*.01;
 				accumulatedColor = smoothstep(vec3(.7),vec3(1.),accumulatedColor);
-				accumulatedColor *= 1.1;
+				accumulatedColor *= 2.1;
 			}
 
 
@@ -468,16 +468,16 @@ vec3 pathTrace(vec3 origin, vec3 direction, vec2 uv, float time)
             float diffuse = max(0.0, dot(normal, lightDirection));
             vec3 lightIntensity = vec3(1.0) / (lightDistance * lightDistance);
             vec3 color = vec3(sin(position + normal) + snoise3(normal + position.y*1.)) * position.y + sin(time)*.2; // Object color
-            vec3 lightColor = vec3(10.0); // Light color
+            vec3 lightColor = vec3(.1); // Light color
 
 
 
 			// Terminate path tracing based on probability
-            float terminateProbability = 1.;
+            float terminateProbability = .01 + (sin(time)+1.)*.5;
             if (random(vec2(position.xy)) < terminateProbability) {
 				for (int bounce = 0; bounce < 10; bounce++){
-					vec3 reflectionDirection = normalize(reflect(direction , normal));
-				     //accumulatedColor += (1./(float(bounce)+1.)) * sceneDistance(position + EPSILON * reflectionDirection,time).x;
+					vec3 reflectionDirection = normalize(reflect(direction , normal + random(vec2(float(bounce),float(-bounce)))));
+				     accumulatedColor += (.1/(float(bounce)+1.)) * sceneDistance(position + EPSILON * reflectionDirection,time).x;
 					 accumulatedColor += sceneDistance(origin + reflectionDirection * dO,time).x * .003;
 					 float fre = clamp(0.,1.,dot(direction,reflectionDirection));
 					 fre = smoothstep(0.7 + sin(time)*.2,.9,fre);
@@ -496,21 +496,23 @@ vec3 pathTrace(vec3 origin, vec3 direction, vec2 uv, float time)
 
         }
 
-
-		// if (position.y >= .92){
-		// 	direction.xz *= rotate2d(time*.02 + sin(time)*.02);
+		// if (position.y >= 1.5){
 		// 	float manip = cnoise2(direction.xy*1.)*(sin(time)+1.)*.5 * 0.;
-		// 	accumulatedColor += smoothstep(0.,1.,pow(sin((direction.y + manip)*1000.)*.13,1.));
+		// 	// manip = sin(direction.z*2.)*.5;
+		// 	// manip = smoothstep(0.,position.y,sin(time));
+		// 	accumulatedColor += smoothstep(0.,1.,pow(sin((direction.y * manip)*1000.)*.01,1.));
 
 		// }
 
 
-		if (position.y >= 1.5){
+		if (position.y >= .8 + sin(time)){
+			direction.xz *= rotate2d(time*.02 + sin(time)*.02);
 			float manip = cnoise2(direction.xy*1.)*(sin(time)+1.)*.5 * 0.;
-			// manip = sin(direction.z*2.)*.5;
-			accumulatedColor += smoothstep(0.,1.,pow(sin((direction.y + manip)*1000.)*.11,1.));
-
+			// accumulatedColor += smoothstep(0.,1.,pow(sin((direction.y + manip)*1000.)*.13,1.));
 		}
+
+
+	
 
 
         
@@ -534,10 +536,10 @@ vec3 pathTrace(vec3 origin, vec3 direction, vec2 uv, float time)
 			//vec2 uv = (gl_FragCoord.xy - 0.5 * vec2(resX,resY)) / min(resX,resY);
 			float time = uTime;
 			
-			vec3 rayOrigin = vec3(0., 2., -10.);
+			vec3 rayOrigin = vec3(0., 01.52, -10.);
 			rayOrigin.xz *= rotate2d(time*.1);
-			rayOrigin.y += sin(time*.5);
-			rayOrigin.y += cnoise2(vec2(time*.5,-time*.2))*.2;
+			rayOrigin.y += ((sin(time*.25)*10.)+10.)*.5;
+			// rayOrigin.y += cnoise2(vec2(time*.5,-time*.2))*.2;
 
 			vec3 target = vec3(0.,0.,0.);
 
