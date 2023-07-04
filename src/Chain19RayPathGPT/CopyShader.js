@@ -428,6 +428,7 @@ vec3 pathTrace(vec3 origin, vec3 direction, vec2 uv, float time)
     vec3 accumulatedColor = vec3(0.0);
     vec3 attenuation = vec3(10.);
 	vec3 normal;
+	vec3 position;
 
 	//additions
 	float dO=0.;
@@ -437,7 +438,7 @@ vec3 pathTrace(vec3 origin, vec3 direction, vec2 uv, float time)
     for (int i = 0; i < MAX_ITERATIONS; i++) {
        
 		
-		vec3 position = origin + direction * dO;
+		position = origin + direction * dO;
 		
 		vec2 scene = sceneDistance(position, time);
         float d = scene.x;
@@ -521,6 +522,11 @@ vec3 pathTrace(vec3 origin, vec3 direction, vec2 uv, float time)
         //attenuation *= 1.  * smoothstep(0.,1.,1./pow(d,1.)); // Attenuation factor
     }
     
+	accumulatedColor.yz += position.y*.2 + sin(direction.y*10. + time)*.8;
+	// accumulatedColor.yz *= rotate2d(position.y*20. + time);
+	// accumulatedColor += mix(0.,sin(position.x*9.),position.y*.8);
+
+
     return accumulatedColor;
 }
 
