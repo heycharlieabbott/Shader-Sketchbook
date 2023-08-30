@@ -390,7 +390,7 @@ float n2 = (sin((uv.x * uv.y)*10.)+ 1.)*0.5;
 
 
 void trace(vec2 p, vec2 dir, inout vec3 c,in float time)  {
-  for (int j = 0; j < 200; j++) {
+  for (int j = 0; j < 100; j++) {
       float d;
       scene(p, c, d, time);
       if (d < 1e-10) {

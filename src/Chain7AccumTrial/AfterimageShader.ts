@@ -412,7 +412,7 @@ vec2 BC = pos;
 
 
 void trace(vec2 p, vec2 dir, inout vec3 c,in float time)  {
-  for (int j = 0; j < 200; j++) {
+  for (int j = 0; j < 30; j++) {
       float d;
       scene(p, c, d, time);
       if (d < 1e-8) {

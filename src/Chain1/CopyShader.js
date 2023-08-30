@@ -340,7 +340,7 @@ void trace(vec2 p, vec2 dir, out vec3 c,in float time)  {
     c = vec3(0,0,0);
 }
 
-#define SAMPLES 20
+#define SAMPLES 5
 
 
   //------------------------------------------------------------------------------------------------------------

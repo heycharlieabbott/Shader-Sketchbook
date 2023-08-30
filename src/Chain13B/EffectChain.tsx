@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import * as React from "react";
 import { useRef } from "react";
 import { Effects, useDepthBuffer } from "@react-three/drei";
