@@ -134,6 +134,7 @@ button:focus-visible {
 
 .description2{
   width: 50%;
+  padding-top: 1rem;
   text-align: center;
 }
 

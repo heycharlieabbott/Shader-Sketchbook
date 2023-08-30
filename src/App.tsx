@@ -13,7 +13,7 @@ import {EffectChain} from './Chain11Sim4/EffectChain.tsx'
 
 import {EffectChain as EffectChain1} from './Chain1/EffectChain.tsx'
 import {EffectChain as EffectChain2} from './Chain2/EffectChain.tsx'
-import {EffectChain as EffectChain3} from './Chain3/EffectChain.tsx'
+import {EffectChain as EffectChain3} from './Chain3v6/EffectChain.tsx'
 import {EffectChain as EffectChain4} from './Chain4Header/EffectChain.tsx'
 import {EffectChain as EffectChain5} from './Chain5/EffectChain.tsx'
 import {EffectChain as EffectChain6} from './Chain6/EffectChain.tsx'
