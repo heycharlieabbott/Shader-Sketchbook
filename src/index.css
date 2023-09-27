@@ -39,6 +39,14 @@ body {
   
 }
 
+.app-full{
+  display: flex;
+  height: 100vh;
+  gap:1rem;
+  padding: 0rem 1rem;
+  
+}
+
 .titles{
   display: flex;
   gap: 1rem;
@@ -62,6 +70,10 @@ body {
   border: solid 1px;
   overflow: hidden;
   
+}
+
+.canvas-full{
+  width: 100%;  
 }
 
 .interface{

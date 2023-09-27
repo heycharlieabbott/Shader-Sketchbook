@@ -30,6 +30,7 @@ import {EffectChain as EffectChain16} from './Chain16Sim6/EffectChain.tsx'
 import {EffectChain as EffectChain17} from './Chain17RayMarch1/EffectChain.tsx'
 import {EffectChain as EffectChain18} from './Chain18RayPathGPT/EffectChain.tsx'
 import {EffectChain as EffectChain19} from './Chain19RayPathGPT/EffectChain.tsx'
+import {EffectChain as EffectChain20} from './Chain20noises/EffectChain.tsx'
 
 
 import { Descriptions } from "./Descriptions.tsx";
@@ -89,7 +90,7 @@ function App() {
 
   const [description, setDescription] = useState(Object.values(Descriptions)[0])
   
-  const [curShader,setCurShader] = useState(<EffectChain1/>)
+  const [curShader,setCurShader] = useState(<EffectChain20/>)
 
   // const opts = useControls(
   //   {
@@ -115,33 +116,36 @@ const [titleshader, setTitleShader] = useState(0)
 
   }
 
+const [fullscreen, setFullScreen] = useState(true);
+
   return (
     <>
-    <div className="titles">
+    
+    {/* <div className="titles">
     <div className="shadertitle">SHADER {titleshader + 1}</div>
     <div className="shaderselector">SELECTOR</div>
-    </div>
+    </div> */}
     
-    <div className="app">
+    <div className={fullscreen ? 'app-full': 'app'}>
       
-    <div className="canvas">
+    <div className={fullscreen ? 'canvas-full': 'canvas'}>
      <Canvas gl={{ preserveDrawingBuffer: true }}>
       {curShader}
       {/* <Recorder cap={captureStarted} endTime={70} screenshot={screenShot}/> */}
     </Canvas>
     </div>
-    <div className="interface">
+    {/* <div className="interface">
     <ul className="shaderlist">
     {chains.map((t,i) => (
 <button key={i} onClick={()=>handleClick(i)}>{i + 1}</button>
 ))}
-    </ul>
+    </ul> */}
     </div>
-    </div>
+    {/* </div>
     <section className="description">
     <p className="descriptiontext">{description}</p>
     <p className="description2">Shaders created by <a target="_blank" href="https://heycharlieabbott.com">Charlie Abbott</a></p>
-    </section>
+    </section> */}
     </>
   )
 }
