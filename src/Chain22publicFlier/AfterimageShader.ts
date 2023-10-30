@@ -378,78 +378,9 @@
 
     vec2 uv = vUv;
 
-    float iTime = time;
+    float iTime = time; 
 
-    vec4 col;
-
-    
-		int n = GetNeighbors(tOld, ivec2(gl_FragCoord));
-
-
-
-	  
-	  if (framecount < 2){
-		col += vec4(texelNew.x)*.00001 * uv.y;
-	  
-	  }
-
-	//   else if (framecount % 10 != 0){
-	// 	col = texO;
-	//   }
-
-    else {
-		
-		bool alive1 = texelFetch(tOld, ivec2(gl_FragCoord),0).w > .0;
-
-		int next1 = 0;
-
-		float inc = texture2D(tOld, uv).z;
-
-		float thresh = 0.3;
-
-		if (alive1 && (n ==2 || n == 3)){
-			next1 = 1;
-			
-			
-		}
-		else if (!alive1 && n == 3){
-			next1 = 0;
-			 inc -= cos(cnoise2(uv/3. + time))*.1;
-			// inc -= 0.0002;
-			uv *= rotate2d(time);
-			inc += cnoise2(uv*10.);
-		
-
-		
-		}
-
-		if (inc <= inc + thresh || inc >= inc - thresh){
-			inc += random(uv + time)*.000000001;
-			// inc *= cnoise2(uv + time);
-			//inc -= 0.00001;
-			next1 = 0;
-			uv.y += sin(time)*.001;
-			inc += mix(0.00001,0.002,((snoise3(vec3(cos(uv.x - uv.y ),uv.y,0.))))*.1  + length(vec2(sin(uv.x*10.) + cnoise2(vec2(random(floor(uv*10.)),random(floor(uv * 20. + time)))),uv.y)));
-
-			inc /= mix(1.,sin(uv.y),0.001 + sin(time*.25)*.07)*.9999;
-
-		}
-
-
-		else next1 = 0;
-
-
-		inc = mod(inc,1.);
-
-
-		col.w = float(next1);
-		col.z = inc;
-	}
-
-
-
- 
-    gl_FragColor = vec4(vec3(col.z),col.w);
+    gl_FragColor = texN;
 
      }`
  }

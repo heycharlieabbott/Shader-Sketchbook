@@ -1,64 +1,36 @@
 /**
- * Afterimage shader
- * I created this effect inspired by a demo on codepen:
- * https://codepen.io/brunoimbrizi/pen/MoRJaN?page=1&
+ * Full-screen textured quad shader
  */
+import glsl from 'glslify'
 
- import type { IUniform, Texture } from 'three'
- import type { IShader } from 'three-stdlib/shaders/types'
- import glsl from 'glslify'
- 
- export type AfterimageShaderUniforms = {
-   damp: IUniform<number>
-   tNew: IUniform<Texture | null>
-   tOld: IUniform<Texture | null>
-   d: IUniform<Texture | null>
-   time: IUniform<number>
-   framecount: IUniform<number>
- }
- 
- export interface IAfterimageShader extends IShader<AfterimageShaderUniforms> {}
- 
- export const AfterimageShader: IAfterimageShader = {
-   uniforms: {
-     damp: { value: 0.96 },
-     time: {value: 0},
-     tOld: { value: null },
-     tNew: { value: null },
-     d: { value: null },
-     framecount: {value: 0},
-     
-   },
- 
-   
-   vertexShader: glsl`
-    
-     varying vec2 vUv;
- 
-     void main() {
- 
-     vUv = uv;
-     gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
-     
+const CopyShader = {
 
-     }`
-   ,
- 
-   fragmentShader: glsl`
-    
-     uniform float damp;
-     uniform float time;
- 
-      uniform sampler2D tOld;
-     uniform sampler2D tNew;
-     uniform sampler2D d;
+	uniforms: {
 
- 
-     varying vec2 vUv;
+		'tDiffuse': { value: null },
+		'opacity': { value: 1.0 },
+		'uTime': { value: 0.0 },
+		'framecount': {value: 0}
 
-     uniform int framecount;
 
-     vec4 when_gt( vec4 x, float y ) {
+	},
+
+	vertexShader: /* glsl */`
+		varying vec2 vUv;
+		void main() {
+			vUv = uv;
+			gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+		}`,
+
+	fragmentShader: /* glsl */`
+		uniform float opacity;
+		uniform sampler2D tDiffuse;
+		varying vec2 vUv;
+		uniform float uTime;
+		uniform int framecount;
+
+
+		vec4 when_gt( vec4 x, float y ) {
 			return max( sign( x - y ), 0.0 );
 		  }
 		   
@@ -346,110 +318,22 @@
 			}
 			return value;
 		  }
+		void main() {
 
+			gl_FragColor = texture2D( tDiffuse, vUv );
+			vec2 uv = vUv;
+			float time = uTime;
 
-     
-     int GetNeighbors(sampler2D buff, ivec2 uv){
-        int num = 0;
-        float thresh = .0;
+			float n = sdBox(uv - 0.5, vec2(.2));
+			float s = smoothstep(0.05,.055,n);
 
-        for (int y=-1; y<=1; y++){
-          for (int x = -1; x <= 1; x++){
-            if (x == 0 && y == 0) continue;
-            num += texelFetch(buff, uv + ivec2(x,y),0).r > thresh ? 1 : 0;
-          }
-        }
-
-		num += texelFetch(buff, uv + ivec2(0,1),0).r > thresh ? 1 : 0;
-
-        return num;
-     }
-
- 
-    void main() {
- 
-	vec4 texelNew = texelFetch( tNew, ivec2(gl_FragCoord), 0 );
-
-	vec4 texN = texture2D( tNew, vUv);
-	vec4 texO = texture2D( tOld, vUv);
-
-
-	int FC = framecount;
-
-    vec2 uv = vUv;
-
-    float iTime = time;
-
-    vec4 col;
-
-    
-		int n = GetNeighbors(tOld, ivec2(gl_FragCoord));
-
-
-
-	  
-	  if (framecount < 2){
-		col += vec4(texelNew.x)*.00001 * uv.y;
-	  
-	  }
-
-	//   else if (framecount % 10 != 0){
-	// 	col = texO;
-	//   }
-
-    else {
-		
-		bool alive1 = texelFetch(tOld, ivec2(gl_FragCoord),0).w > .0;
-
-		int next1 = 0;
-
-		float inc = texture2D(tOld, uv).z;
-
-		float thresh = 0.3;
-
-		if (alive1 && (n ==2 || n == 3)){
-			next1 = 1;
 			
-			
-		}
-		else if (!alive1 && n == 3){
-			next1 = 0;
-			 inc -= cos(cnoise2(uv/3. + time))*.1;
-			// inc -= 0.0002;
-			uv *= rotate2d(time);
-			inc += cnoise2(uv*10.);
-		
+			s += max(0.,sin(n * 299.));
 
-		
-		}
+			vec4 col = vec4(s);
+			gl_FragColor = col;
+		}`
 
-		if (inc <= inc + thresh || inc >= inc - thresh){
-			inc += random(uv + time)*.000000001;
-			// inc *= cnoise2(uv + time);
-			//inc -= 0.00001;
-			next1 = 0;
-			uv.y += sin(time)*.001;
-			inc += mix(0.00001,0.002,((snoise3(vec3(cos(uv.x - uv.y ),uv.y,0.))))*.1  + length(vec2(sin(uv.x*10.) + cnoise2(vec2(random(floor(uv*10.)),random(floor(uv * 20. + time)))),uv.y)));
+};
 
-			inc /= mix(1.,sin(uv.y),0.001 + sin(time*.25)*.07)*.9999;
-
-		}
-
-
-		else next1 = 0;
-
-
-		inc = mod(inc,1.);
-
-
-		col.w = float(next1);
-		col.z = inc;
-	}
-
-
-
- 
-    gl_FragColor = vec4(vec3(col.z),col.w);
-
-     }`
- }
+export { CopyShader };

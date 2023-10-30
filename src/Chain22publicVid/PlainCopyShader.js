@@ -1,64 +1,37 @@
 /**
- * Afterimage shader
- * I created this effect inspired by a demo on codepen:
- * https://codepen.io/brunoimbrizi/pen/MoRJaN?page=1&
+ * Full-screen textured quad shader
  */
+import glsl from 'glslify'
 
- import type { IUniform, Texture } from 'three'
- import type { IShader } from 'three-stdlib/shaders/types'
- import glsl from 'glslify'
- 
- export type AfterimageShaderUniforms = {
-   damp: IUniform<number>
-   tNew: IUniform<Texture | null>
-   tOld: IUniform<Texture | null>
-   d: IUniform<Texture | null>
-   time: IUniform<number>
-   framecount: IUniform<number>
- }
- 
- export interface IAfterimageShader extends IShader<AfterimageShaderUniforms> {}
- 
- export const AfterimageShader: IAfterimageShader = {
-   uniforms: {
-     damp: { value: 0.96 },
-     time: {value: 0},
-     tOld: { value: null },
-     tNew: { value: null },
-     d: { value: null },
-     framecount: {value: 0},
-     
-   },
- 
-   
-   vertexShader: glsl`
-    
-     varying vec2 vUv;
- 
-     void main() {
- 
-     vUv = uv;
-     gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
-     
+const PlainCopyShader = {
 
-     }`
-   ,
- 
-   fragmentShader: glsl`
-    
-     uniform float damp;
-     uniform float time;
- 
-      uniform sampler2D tOld;
-     uniform sampler2D tNew;
-     uniform sampler2D d;
+	uniforms: {
 
- 
-     varying vec2 vUv;
+		'tDiffuse': { value: null },
+		'opacity': { value: 1.0 },
+		'uTime': { value: 0.0 },
+		'resX': {value : 0.0},
+		'resY': {value: 0.0}
 
-     uniform int framecount;
 
-     vec4 when_gt( vec4 x, float y ) {
+	},
+
+	vertexShader: /* glsl */`
+		varying vec2 vUv;
+		void main() {
+			vUv = uv;
+			gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+		}`,
+
+	fragmentShader: /* glsl */`
+		uniform float opacity;
+		uniform sampler2D tDiffuse;
+		varying vec2 vUv;
+		uniform float uTime;
+		uniform float resX;
+		uniform float resY;
+
+		vec4 when_gt( vec4 x, float y ) {
 			return max( sign( x - y ), 0.0 );
 		  }
 		   
@@ -348,108 +321,58 @@
 		  }
 
 
-     
-     int GetNeighbors(sampler2D buff, ivec2 uv){
-        int num = 0;
-        float thresh = .0;
+		  vec4 hey(sampler2D img, vec2 uv, vec2 res, float time ){
+			vec4 colX = vec4(0.);
+			vec4 colY = vec4(0.);
+			vec4 col = vec4(0.);
 
-        for (int y=-1; y<=1; y++){
-          for (int x = -1; x <= 1; x++){
-            if (x == 0 && y == 0) continue;
-            num += texelFetch(buff, uv + ivec2(x,y),0).r > thresh ? 1 : 0;
-          }
-        }
-
-		num += texelFetch(buff, uv + ivec2(0,1),0).r > thresh ? 1 : 0;
-
-        return num;
-     }
-
- 
-    void main() {
- 
-	vec4 texelNew = texelFetch( tNew, ivec2(gl_FragCoord), 0 );
-
-	vec4 texN = texture2D( tNew, vUv);
-	vec4 texO = texture2D( tOld, vUv);
-
-
-	int FC = framecount;
-
-    vec2 uv = vUv;
-
-    float iTime = time;
-
-    vec4 col;
-
-    
-		int n = GetNeighbors(tOld, ivec2(gl_FragCoord));
-
-
-
-	  
-	  if (framecount < 2){
-		col += vec4(texelNew.x)*.00001 * uv.y;
-	  
-	  }
-
-	//   else if (framecount % 10 != 0){
-	// 	col = texO;
-	//   }
-
-    else {
-		
-		bool alive1 = texelFetch(tOld, ivec2(gl_FragCoord),0).w > .0;
-
-		int next1 = 0;
-
-		float inc = texture2D(tOld, uv).z;
-
-		float thresh = 0.3;
-
-		if (alive1 && (n ==2 || n == 3)){
-			next1 = 1;
+	
 			
 			
-		}
-		else if (!alive1 && n == 3){
-			next1 = 0;
-			 inc -= cos(cnoise2(uv/3. + time))*.1;
-			// inc -= 0.0002;
-			uv *= rotate2d(time);
-			inc += cnoise2(uv*10.);
+
+			for (int x = -5; x < 5; x++ ){
+				colX = texelFetch(img, ivec2(uv) + ivec2(x,0), 0);
+				for (int y = -5; y < 5; y++){
+
+					vec2 mods = mod(vec2(uv.x, uv.y),vec2(res.x,res.y));
+
+
+						colY += texelFetch(img, ivec2(uv) - ivec2(x,y), 0);					
+				}
+				
+			}
+
+			col = colY / 32.;
+
+			return col;
+		  }
+	
+		void main() {
+			float time = uTime;
+
+			float SIZE = 1.;
+
+			vec2 uv = vUv;
+			vec4 col = (texture2D( tDiffuse, uv / SIZE));
+
+			// float n = sdBox(uv - 0.5, vec2(.2));
+			// float s = smoothstep(0.05,.055,n);
+
+			// col = vec4(max(s, col.x));
+
+
+			// col = pow(col,vec4(.2));
+
+			// col = clamp(vec4(0.),vec4(1.),col);
+
+			col = pow(col,vec4(.1));
+
+			// col = vec4(1.) - col;
+			col.w = 1.;
+			gl_FragColor = vec4(col);
 		
+		}`
 
-		
-		}
+};
 
-		if (inc <= inc + thresh || inc >= inc - thresh){
-			inc += random(uv + time)*.000000001;
-			// inc *= cnoise2(uv + time);
-			//inc -= 0.00001;
-			next1 = 0;
-			uv.y += sin(time)*.001;
-			inc += mix(0.00001,0.002,((snoise3(vec3(cos(uv.x - uv.y ),uv.y,0.))))*.1  + length(vec2(sin(uv.x*10.) + cnoise2(vec2(random(floor(uv*10.)),random(floor(uv * 20. + time)))),uv.y)));
-
-			inc /= mix(1.,sin(uv.y),0.001 + sin(time*.25)*.07)*.9999;
-
-		}
-
-
-		else next1 = 0;
-
-
-		inc = mod(inc,1.);
-
-
-		col.w = float(next1);
-		col.z = inc;
-	}
-
-
-
- 
-    gl_FragColor = vec4(vec3(col.z),col.w);
-
-     }`
- }
+export { PlainCopyShader };

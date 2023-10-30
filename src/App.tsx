@@ -32,6 +32,8 @@ import {EffectChain as EffectChain18} from './Chain18RayPathGPT/EffectChain.tsx'
 import {EffectChain as EffectChain19} from './Chain19RayPathGPT/EffectChain.tsx'
 import {EffectChain as EffectChain20} from './Chain20noises/EffectChain.tsx'
 import {EffectChain as EffectChain21} from './Chain21noises/EffectChain.tsx'
+import {EffectChain as EffectChain22} from './Chain22publicFlier/EffectChain.tsx'
+import {EffectChain as EffectChain23} from './Chain22publicVid/EffectChain.tsx'
 
 
 import { Descriptions } from "./Descriptions.tsx";
@@ -91,7 +93,7 @@ function App() {
 
   const [description, setDescription] = useState(Object.values(Descriptions)[0])
   
-  const [curShader,setCurShader] = useState(<EffectChain21/>)
+  const [curShader,setCurShader] = useState(<EffectChain23/>)
 
   // const opts = useControls(
   //   {
@@ -132,7 +134,7 @@ const [fullscreen, setFullScreen] = useState(true);
     <div className={fullscreen ? 'canvas-full': 'canvas'}>
      <Canvas gl={{ preserveDrawingBuffer: true }}>
       {curShader}
-      {/* <Recorder cap={captureStarted} endTime={50} screenshot={screenShot}/> */}
+      {/* <Recorder cap={captureStarted} endTime={20} screenshot={screenShot}/> */}
     </Canvas>
     </div>
     {/* <div className="interface">
